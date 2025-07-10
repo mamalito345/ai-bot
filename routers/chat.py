@@ -57,6 +57,12 @@ async def chat_handler(payload: ChatRequest):
             "content": req_msg,
             "timestamp": datetime.now().isoformat()
         }
+        
+        all_keys = sorted(map(int, messages.keys()))
+        if len(all_keys) > 50:
+            to_delete = all_keys[:len(all_keys) - 50]
+            for k in to_delete:
+                del messages[str(k)]
 
         # --- Mesaj tipi
         msg_type = await mm.get_ai_response(
