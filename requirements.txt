@@ -1,5 +1,3 @@
-# Editable Git install with no remote (ai_bot_fastapi==0.1.0)
--e c:\users\eymen\onedrive\masaüstü\ai-bot-fastapi
 aiosmtplib==4.0.1
 aiosqlite==0.21.0
 alembic==1.16.2
