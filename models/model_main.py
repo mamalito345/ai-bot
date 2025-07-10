@@ -18,7 +18,11 @@ async def get_ai_response(message: str, prompt: str) -> str:
             ],
             temperature=0.7
         )
-        print("çalıştı_özet")
+        usage = response.usage  # type: openai.types.CompletionUsage
+        if usage:
+            print(f"[TOKEN] prompt: {usage.prompt_tokens}, completion: {usage.completion_tokens}, total: {usage.total_tokens}")
+
+
         return response.choices[0].message.content.strip()
     except Exception as e:
         return f"Hata oluştu: {str(e)}"
