@@ -45,8 +45,28 @@ async def chat_handler(payload: ChatRequest):
         with open(LOG_FILE, "r", encoding="utf-8") as f:
             chat_log = json.load(f)
 
+        # Kullanıcı ilk defa geliyorsa messages ve state alanlarını oluştur
         if client_id not in chat_log:
-            chat_log[client_id] = {"messages": {}}
+            chat_log[client_id] = {
+                "messages": {},
+                "state": {
+                    "ad": None,
+                    "son_intent": None,
+                    "son_urun": None,
+                    "sorun_durumu": None,
+                    "ozel_not": None
+                }
+            }
+
+        # Eğer eski veride sadece messages varsa, state'i sonradan da ekleyelim (geriye dönük uyumluluk)
+        elif "state" not in chat_log[client_id]:
+            chat_log[client_id]["state"] = {
+                "ad": None,
+                "son_intent": None,
+                "son_urun": None,
+                "sorun_durumu": None,
+                "ozel_not": None
+            }
 
         messages = chat_log[client_id]["messages"]
         next_idx = str(max(map(int, messages.keys()), default=-1) + 1)
@@ -70,16 +90,9 @@ async def chat_handler(payload: ChatRequest):
         )
 
 
-
-        # --- İlgili işlemi yap
-        if msg_type == "ürün_isteği":
-            if len(req_msg.split()) <= 3:
-                req_msg = f"{req_msg} ürünü almak istiyorum"
-
-            resp = await client.embeddings.create(
-                model="text-embedding-3-small",
-                input=req_msg
-            )
+        if chat_log[client_id]["state"]["son_intent"] == "fiyat_sordu":
+            # Kullanıcının son mesajı ürünle ilgili mi?
+            resp = await client.embeddings.create(model="text-embedding-3-small", input=req_msg)
             user_vec = np.array(resp.data[0].embedding, dtype=np.float32)
 
             best, best_score = None, -1.0
@@ -90,10 +103,68 @@ async def chat_handler(payload: ChatRequest):
                     if sim > best_score:
                         best, best_score = p, sim
 
-            if best:
-                bot_reply = f"Size en uygun ürün: {best.name}\nİncelemek için: {best.permalink}"
+            if best_score > 0.80:
+                chat_log[client_id]["state"]["son_urun"] = best.name
+
+                # Açıklamadan fiyat belirleyici özellikleri GPT ile çıkar
+                prompt_text = (
+                    f"Aşağıda bir ürün açıklaması var. Bu açıklamaya göre ürünün fiyatını etkileyen "
+                    f"özellikleri kısa ve maddeler halinde belirt:\n\n"
+                    f"\"\"\"\n{best.description}\n\"\"\"\n\n"
+                    f"Sadece madde madde listele, örnek: boyut, baskı tipi, ışık vs."
+                )
+
+                gpt_resp = await mm.get_ai_response("", prompt=prompt_text)
+                özellikler = gpt_resp.strip().replace("*", "👉").replace("-", "👉")
+
+                bot_reply = (
+                    f"<b>{best.name}</b> adlı ürün için fiyat bilgisi verebilmem için lütfen aşağıdaki özellikleri belirtin:\n"
+                    f"{özellikler}\n\n"
+                    f"Ürünü incelemek isterseniz: <a href='{best.permalink}'>{best.permalink}</a>"
+                )
             else:
-                bot_reply = "Üzgünüm, benzer bir ürün bulamadım."
+                chat_log[client_id]["state"]["son_intent"] = "ürün_isteği"
+                bot_reply = (
+                    "Yeni bir ürün istiyor gibisiniz. Hemen yardımcı oluyorum.\n"
+                    "Hangi ürünü aradığınızı belirtir misiniz?"
+                )
+
+        # --- İlgili işlemi yap
+        elif msg_type == "ürün_isteği":
+            if len(req_msg.split()) <= 3:
+                req_msg = f"{req_msg} ürünü almak istiyorum"
+
+            resp = await client.embeddings.create(
+                model="text-embedding-3-small",
+                input=req_msg
+            )
+            user_vec = np.array(resp.data[0].embedding, dtype=np.float32)
+
+            similar_products = []
+            with SessionLocal() as db:
+                for p in db.query(Product).filter(Product.embedding.isnot(None)):
+                    prod_vec = np.frombuffer(p.embedding, dtype=np.float32)
+                    sim = cosine(user_vec, prod_vec)
+                    if sim > 0.80:  # Eşik değeri
+                        similar_products.append((p, sim))
+
+            similar_products.sort(key=lambda x: x[1], reverse=True)
+
+            if similar_products:
+                best = similar_products[0][0]
+                listed = ""
+                for p, score in similar_products:
+                    listed += f"🔹 <a href='{p.permalink}'>{p.name}</a>\n"
+
+                bot_reply = (
+                    f"Size en uygun ürün: <b>{best.name}</b>\n"
+                    f"İncelemek için: <a href='{best.permalink}'>{best.permalink}</a>\n\n"
+                    f"Benzer diğer ürünler:\n{listed.strip()}\n\n"
+                    "Bu ürünlerden hangisiyle ilgileniyorsunuz?"
+                )
+            else:
+                bot_reply = "Üzgünüm, benzer bir ürün bulamadım. Daha fazla bilgi verebilir misiniz?"
+
 
         elif msg_type == "tasarım_isteği":
             # --- Hafıza: Son 10 mesajı topla
@@ -140,37 +211,52 @@ async def chat_handler(payload: ChatRequest):
                 bot_reply = "Tasarım isteğinizi anladım, ancak şu anda size uygun bir ürün belirleyemedim. Daha fazla detay verebilir misiniz?"
 
         elif msg_type == "fiyat_sorgusu":
-            bot_reply = (
-                "Dilerseniz daha detaylı bilgi için bizimle iletişime geçebilirsiniz:\n"
-                "📞 <a href='tel:+905356647752'>+90 535 664 77 52</a>\n"
-                "📞 <a href='tel:+902163790708'>+90 216 379 07 08</a>"
+            chat_log[client_id]["state"]["son_intent"] = "fiyat_sordu"
+            # --- Embedding oluştur (sadece son kullanıcı mesajı)
+            resp = await client.embeddings.create(
+                model="text-embedding-3-small",
+                input=req_msg
             )
+            user_vec = np.array(resp.data[0].embedding, dtype=np.float32)
 
+            # --- Benzer ürünleri topla
+            similar_products = []
+            with SessionLocal() as db:
+                for p in db.query(Product).filter(Product.embedding.isnot(None)):
+                    prod_vec = np.frombuffer(p.embedding, dtype=np.float32)
+                    sim = cosine(user_vec, prod_vec)
+                    if sim > 0.80:  # Benzerlik eşiği
+                        similar_products.append((p, sim))
 
-        elif msg_type == "stok_sorgusu":
-            bot_reply = await mm.get_ai_response(
-            req_msg, prompt=prompt["selection"]["stok_sorgusu"]["tr"]
-        )
+            similar_products.sort(key=lambda x: x[1], reverse=True)
 
-        elif msg_type == "teslimat_sorgusu":
-            bot_reply = (
-                "Üretim süreçleri ve teslimat bilgisi için lütfen bize ulaşın!\n"
-                "📞 <a href='tel:+905356647752'>+90 535 664 77 52</a>\n"
-                "📞 <a href='tel:+902163790708'>+90 216 379 07 08</a>"
-            )
-        elif msg_type == "kargo":
-            bot_reply = (
-                "Üretim süreçleri ve teslimat bilgisi için lütfen bize ulaşın!\n"
-                "📞 <a href='tel:+905356647752'>+90 535 664 77 52</a>\n"
-                "📞 <a href='tel:+902163790708'>+90 216 379 07 08</a>"
-            )
+            if len(similar_products) == 1:
+                product = similar_products[0][0]
+                bot_reply = (
+                    f"İlgili ürün: <b>{product.name}</b>\n"
+                    f"{product.summary or product.description}\n"
+                    f"<a href='{product.permalink}' target='_blank'>Ürünü incele</a>\n\n"
+                    "Dilerseniz detaylı bilgi için bizimle iletişime geçebilirsiniz:\n"
+                    "📞 <a href='tel:+905356647752'>+90 535 664 77 52</a>\n"
+                    "📞 <a href='tel:+902163790708'>+90 216 379 07 08</a>"
+                )
+            elif len(similar_products) > 1:
+                listed = ""
+                for p, score in similar_products:
+                    listed += f"🔹 <a href='{p.permalink}'>{p.name}</a>\n"
 
-        elif msg_type == "destek_talebi":
-            bot_reply = (
-                "Bize doğrudan ulaşmak isterseniz aşağıdaki numaralardan bize ulaşabilirsiniz:\n"
-                "📞 <a href='tel:+905356647752'>+90 535 664 77 52</a>\n"
-                "📞 <a href='tel:+902163790708'>+90 216 379 07 08</a>"
-            )
+                bot_reply = (
+                    "Aşağıdaki ürünler sorunuza benzer olarak bulundu:\n\n"
+                    f"{listed.strip()}\n\n"
+                    "Bu ürünlerden hangisiyle ilgileniyorsunuz? Daha net yardımcı olabilirim."
+                )
+            else:
+                bot_reply = (
+                    "İlgili ürün şu anda veri tabanımızda görünmüyor. "
+                    "Lütfen daha fazla detay verebilir misiniz?"
+                )
+            
+
 
         elif msg_type == "müşteri_temsili":
             bot_reply = (

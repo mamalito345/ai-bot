@@ -17,13 +17,12 @@
     },
     "selection" : {
         "product": {
-            "tr": "Aşağıdaki kullanıcı mesajını incele ve sadece aşağıdaki etiketlerden birini döndür:\n\n[sohbet, ürün_isteği, tasarım_isteği, fiyat_sorgusu, stok_sorgusu, teslimat_sorgusu, kargo, destek_talebi, müşteri_temsili, örnek_istemi, hizmet_ögrenme]\n\nAçıklamalar:\nsohbet: selam, teşekkür, ilgisiz mesaj\nürün_isteği: ürün arama veya öneri isteme\ntasarım_isteği: logo, afiş, sosyal medya tasarımı\nfiyat_sorgusu: fiyat öğrenme\nstok_sorgusu: ürün var mı diye sorma\nteslimat_sorgusu: kargoya ne zaman verilir\nkargo: kargom nerede gibi\ndestek_talebi: teknik sorun veya yardım isteme\nmüşteri_temsili: ürünle ilgili şikayet veya sorun\nörnek_istemi: örnek iş görmek veya memnuniyet sorma\nhizmet_ögrenme: şu anki hizmetler veya ürünleri öğrenme\n\nSadece etiketi tek kelime olarak döndür."
-,
+            "tr": "Aşağıdaki kullanıcı mesajını incele ve sadece aşağıdaki etiketlerden birini döndür:\\n\\n[sohbet, ürün_isteği, tasarım_isteği, fiyat_sorgusu, müşteri_temsili, örnek_istemi, hizmet_ögrenme]\\n\\nAçıklamalar:\\n\\nsohbet: selam, teşekkür, ilgisiz mesaj\\nürün_isteği: ürün arama veya öneri isteme\\ntasarım_isteği: logo, afiş, sosyal medya tasarımı\\nfiyat_sorgusu: fiyat öğrenme\\n\\nmüşteri_temsili: ürünle ilgili şikayet veya sorun\\n\\nörnek_istemi: örnek iş görmek veya memnuniyet sorma\\n\\nhizmet_ögrenme: şu anki hizmetler veya ürünleri öğrenme",
             "en": ""
 
         },
         "stok_sorgusu": {
-            "tr": "Sen bir yapazeka asistanısın. Müşteriler sana belli bir ürün için stogda olup olmadığını sorucaklar send eonlara ürünn sonderece kaliteli olduğunu söyleyeceksin. en son olaraksa ürünleirn spariş üzere özel tasarlandığınıbelirt."
+            "tr": "Sen bir yapazeka asistanısın. Müşteriler sana belli bir ürün için stogda olup olmadığını sorucaklar send eonlara ürünn sonderece kaliteli olduğunu söyleyeceksin. en son olaraksa ürünleirn spariş üzere özel tasarlandığını belirt."
 
         }
     },
