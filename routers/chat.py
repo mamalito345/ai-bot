@@ -106,7 +106,7 @@ async def chat_handler(payload: ChatRequest):
             system_prompt=prompt["selection"]["product"]["tr"]
         )
         
-        if msg_type == "sohbet":
+        if msg_type == "[sohbet]":
             all_msgs = chat_log[client_id]["messages"]
             sorted_keys = sorted(map(int, all_msgs.keys()))
             last_keys = sorted_keys[-10:]  # En fazla 10, yoksa olan kadar
@@ -124,7 +124,7 @@ async def chat_handler(payload: ChatRequest):
             bot_reply = await mm.get_ai_response(user_message=req_msg, system_prompt=full_prompt)
             
 
-        elif msg_type == "ürün_isteği":
+        elif msg_type == "[ürün_isteği]":
             with SessionLocal() as db:
                 product_names = [p.name for p in db.query(Product).all()]
 
@@ -143,7 +143,7 @@ async def chat_handler(payload: ChatRequest):
                     user_message=user_prompt,
                     system_prompt=full_prompt
                 )
-        elif msg_type == "tasarım_isteği":
+        elif msg_type == "[tasarım_isteği]":
             # 1. Ürünleri veritabanından al
             with SessionLocal() as db:
                 products = db.query(Product).all()
@@ -184,7 +184,7 @@ async def chat_handler(payload: ChatRequest):
                     system_prompt=full_prompt
                 )
          
-        elif msg_type == "fiyat_sorgusu":
+        elif msg_type == "[fiyat_sorgusu]":
             with SessionLocal() as db:
                 products = db.query(Product).all()
 
@@ -227,7 +227,7 @@ async def chat_handler(payload: ChatRequest):
                     user_message=req_msg.strip(),
                     system_prompt=full_prompt
                 )
-        elif msg_type == "müşteri_temsili":
+        elif msg_type == "[müşteri_temsili]":
             # Son 10 mesajı al
             all_msgs = chat_log[client_id]["messages"]
             sorted_keys = sorted(map(int, all_msgs.keys()))
@@ -257,7 +257,7 @@ async def chat_handler(payload: ChatRequest):
                 user_message=req_msg.strip(),
                 system_prompt=full_prompt
             )
-        if msg_type == "örnek_istemi":
+        if msg_type == "[örnek_istemi]":
             # 1. Ürün isimlerini veritabanından al
             with SessionLocal() as db:
                 product_names = [p.name for p in db.query(Product).all()]
@@ -291,7 +291,7 @@ async def chat_handler(payload: ChatRequest):
                 user_message=req_msg.strip(),
                 system_prompt=full_prompt
             )
-        elif msg_type == "hizmet_ögrenme":
+        elif msg_type == "[hizmet_ögrenme]":
             # 1. Ürün adı ve permalinklerini al
             with SessionLocal() as db:
                 products = db.query(Product).all()
