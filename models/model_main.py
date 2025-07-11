@@ -8,13 +8,13 @@ from database.db import SessionLocal  # sync session
  
 client = AsyncOpenAI(api_key=settings.openai_api_key)
 
-async def get_ai_response(message: str, prompt: str) -> str:
+async def get_ai_response(user_message: str, system_prompt: str) -> str:
     try:
         response = await client.chat.completions.create(
             model="gpt-4o-mini",  # o4-mini model
             messages=[
-                {"role": "system", "content": prompt},
-                {"role": "user", "content": message}
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message}
             ],
             temperature=0.7
         )
