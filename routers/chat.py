@@ -188,50 +188,53 @@ async def chat_handler(payload: ChatRequest):
          
         elif msg_type == "[fiyat_sorgusu]":
             with SessionLocal() as db:
-                products = db.query(Product).all()
+                product_names = [name for (name,) in db.query(Product.name).all()]
 
-            if not products:
-                bot_reply = "Şu anda elimizde fiyat bilgisi verilebilecek ürün bulunmamaktadır."
+            # Kullanıcının son mesajlarını topla
+            all_msgs = chat_log[client_id]["messages"]
+            sorted_keys = sorted(map(int, all_msgs.keys()))
+            last_keys = sorted_keys[-10:]
+            history_text = "\n".join(
+                [f"{'Kullanıcı' if m['role'] == 'user' else 'Bot'}: {m['content']}" 
+                for key in last_keys 
+                for m in [all_msgs[str(key)]]]
+            )
+
+            # Aşama 1 Prompt
+            prompt = (
+                "Aşağıda elimizdeki ürün isimleri ve müşteri ile son konuşmalar yer alıyor.\n"
+                "Lütfen müşteri hangi ürünü istiyor sadece bunu belirle. Sadece ürün adını yaz. Açıklama ekleme.\n\n"
+                f"Ürünler:\n" + "\n".join([f"- {n}" for n in product_names]) + "\n\n"
+                f"Konuşma:\n{history_text.strip()}"
+            )
+
+            product_guess = await mm.get_ai_response(req_msg, prompt=prompt)
+            product_name = product_guess.strip()
+
+            if not product_name:
+                bot_reply = "Hangi ürünle ilgilendiğinizi anlayamadım. Önce ürünü belirtmenizi rica ederim."
             else:
-                # 1. Ürün listesi (kısa açıklamalarla)
-                product_text = ""
-                for p in products:
-                    if p.short_description:
-                        product_text += f"- {p.name}: {p.short_description.strip()}\n"
+                with SessionLocal() as db:
+                    product = db.query(Product).filter(Product.name == product_name).first()
 
-                # 2. Kullanıcının son 10 mesajı
-                all_msgs = chat_log[client_id]["messages"]
-                sorted_keys = sorted(map(int, all_msgs.keys()))
-                last_keys = sorted_keys[-10:]
-
-                history_text = ""
-                for key in last_keys:
-                    m = all_msgs[str(key)]
-                    who = "Kullanıcı" if m["role"] == "user" else "Bot"
-                    history_text += f"{who}: {m['content']}\n"
-
-                # 3. Sistem mesajı
-                full_prompt = (
-                    "Sen bir satış asistanısın. Aşağıda elimizdeki ürünlerin kısa açıklamaları ve müşteriyle yapılan son konuşmalar yer alıyor.\n\n"
-                    "Görevin:\n"
-                    "1. Geçmiş konuşmalara ve açıklamalara bakarak müşteri hangi ürünü istiyor, belirle.\n"
-                    "2. Eğer ürün genel bir kategori ise (örneğin tabela) ve elimizde birden fazla tür varsa, bunları kısa şekilde listele.\n"
-                    "3. Eğer ürün tek ve netse, ürün açıklamasına dayanarak fiyatı etkileyen en önemli 2-3 faktörü açıkla (kesinlikle fiyat verme).\n"
-                    "4. Yanıtın 6 cümleyi geçmesin. Açık, net ve kısa ol.bilgi verdikten sonra bakahangi konuda yardımcı olabilirim deme.\n\n"
-                    "Kibar ve nazik ol yapayzeka asistanı olsanda iyimisin gibi insanni sorualra olabildiğince insamış gibi cevapver insangibi hissettir\n\n"
-                    "İletişim numaraları:\n"
-                    "📞 +90 535 664 77 52\n"
-                    "📞 +90 216 379 07 08\n\n"
-                    f"Ürün Listesi:\n{product_text.strip()}\n\n"
-                    f"Konuşma Geçmişi:\n{history_text.strip()}"
-                )
-
-
-                # 4. AI yanıtı
-                bot_reply = await mm.get_ai_response(
-                    user_message=req_msg.strip(),
-                    system_prompt=full_prompt
-                )
+                if not product or not product.short_description:
+                    bot_reply = f"{product_name} ürünü hakkında detaylı bilgiye ulaşılamadı."
+                else:
+                    prompt = (
+                        f"Aşağıda {product_name} adlı ürünün kısa açıklaması yer almakta:\n\n"
+                        f"{product.short_description.strip()}\n\n"
+                        "Sen bir satış danışmanısın. Müşteri bu ürünle ilgileniyor. "
+                        "Amacın fiyatı doğrudan vermeden önce fiyatı etkileyen faktörleri öğrenmek.\n\n"
+                        "Bu yüzden kullanıcılara 3 ila 5 madde şeklinde kısa, net ve seçenek doğuran sorular sor:\n"
+                        "- Boyutları ne olacak?\n"
+                        "- Nerede kullanılacak?\n"
+                        "- Hangi malzemeden üretilecek?\n"
+                        "- İç mi dış mekan mı?\n"
+                        "- Ekstra istek var mı?\n\n"
+                        "Sadece bu şekilde soru sor. Açıklama verme. Kısa ve net maddeler yaz."
+                    )
+                    bot_reply = await mm.get_ai_response(req_msg, prompt=prompt)
+            
         elif msg_type == "[müşteri_temsili]":
             # Son 10 mesajı al
             all_msgs = chat_log[client_id]["messages"]
