@@ -85,9 +85,27 @@ async def chat_handler(payload: ChatRequest):
                 del messages[str(k)]
 
         # --- Mesaj tipi
+        # Son 10 mesajı al
+        all_msgs = chat_log[client_id]["messages"]
+        sorted_keys = sorted(map(int, all_msgs.keys()))
+        last_keys = sorted_keys[-10:]
+
+        # Geçmişi birleştir
+        history_text = ""
+        for key in last_keys:
+            m = all_msgs[str(key)]
+            who = "Kullanıcı" if m["role"] == "user" else "Bot"
+            history_text += f"{who}: {m['content']}\n"
+
+        # Konuşma geçmişi + kullanıcı mesajını birleştir
+        full_message = f"{history_text.strip()}\nKullanıcı: {req_msg.strip()}"
+
+        # AI'dan mesaj türünü belirlemesini iste
         msg_type = await mm.get_ai_response(
-            user_message=req_msg, system_prompt=prompt["selection"]["product"]["tr"]
+            user_message=full_message,
+            system_prompt=prompt["selection"]["product"]["tr"]
         )
+        
         if msg_type == "sohbet":
             all_msgs = chat_log[client_id]["messages"]
             sorted_keys = sorted(map(int, all_msgs.keys()))
@@ -304,7 +322,8 @@ async def chat_handler(payload: ChatRequest):
                     "Eğer kullanıcı belirli bir ürünle ilgileniyorsa, ilgili ürünün bağlantısını mesajda ver.\n"
                     "Eğer genel bilgi istiyorsa, şu kategori sayfasına yönlendir:\n"
                     "Kibar ve nazik ol yapayzeka asistanı olsanda iyimisin gibi insanni sorualra olabildiğince insamış gibi cevapver insangibi hissettir\n\n"
-                    "👉 https://eymenreklam.com/urun-kategori\n\n"
+                    "her mesajın başında merhaba demene gerekyok konuma anlık olarak gerçekleşiyor mesajları atan kişi ilkdefa sana mesaj atıyormuş gib ibrmesaj atmazsa merhaba deme\n\n"
+                    "👉 https://eymenreklam.com/urun-kategori \n\n"
                     "Cevabın sade, açıklayıcı ve yönlendirici olsun.\n\n"
                     f"Ürün Listesi:\n{product_list_text.strip()}\n\n"
                     f"Konuşma Geçmişi:\n{history_text.strip()}"
