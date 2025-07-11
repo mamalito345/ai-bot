@@ -115,7 +115,7 @@ async def chat_handler(payload: ChatRequest):
             else:
                 product_list_text = "\n".join([f"- {name}" for name in product_names])
                 full_prompt = (
-                    "Sen bir satış danışmanısın. Aşağıda elimizde bulunan ürünlerin listesi yer almakta. Bulardan hangileri kullanıcının istediği ürünle örtüşüyorsa elimizde şu ürünler var şeklinde ürünleri yaz. Sonrasında başka hangi konuda yardımcı olabilirim gib bir ibare ekleme sadece elimizde bu üründne bulunmktadır de.\n"
+                    "Sen bir satış danışmanısın. Aşağıda elimizde bulunan ürünlerin listesi yer almakta. Bulardan hangileri kullanıcının istediği ürünle örtüşüyorsa elimizde şu ürünler var şeklinde ürünleri yaz. Sonrasında başka hangi konuda yardımcı olabilirim gib bir ibare ekleme sadece elimizde bu üründne bulunmktadır de.Kibar ve nazik ol yapayzeka asistanı olsanda iyimisin gibi insanni sorualra olabildiğince insamış gibi cevapver insangibi hissettir\n"
                     f"Ürün Listesi:\n{product_list_text}"
                 )
 
@@ -155,6 +155,7 @@ async def chat_handler(payload: ChatRequest):
                     "Sen bir tasarım danışmanı asistansın. Kullanıcının yaptığı görüşme geçmişi ve "
                     "tasarım talebine göre aşağıdaki ürünlerden hangisinin bu isteğe uygun olduğunu belirle.\n"
                     "Ayrıca kullanıcıya yönlendirici ve açıklayıcı bir cevap ver.\n\n"
+                    "Kibar ve nazik ol yapayzeka asistanı olsanda iyimisin gibi insanni sorualra olabildiğince insamış gibi cevapver insangibi hissettir\n\n"
                     f"Ürün Listesi:\n{product_text.strip()}\n\n"
                     f"Konuşma Geçmişi:\n{history_text.strip()}"
                 )
@@ -177,7 +178,7 @@ async def chat_handler(payload: ChatRequest):
                 for p in products:
                     if p.short_description:
                         product_text += f"- {p.name}: {p.short_description.strip()}\n"
-                        
+
                 # 2. Kullanıcının son 10 mesajı
                 all_msgs = chat_log[client_id]["messages"]
                 sorted_keys = sorted(map(int, all_msgs.keys()))
@@ -197,6 +198,7 @@ async def chat_handler(payload: ChatRequest):
                     "2. Eğer ürün genel bir kategori ise (örneğin tabela) ve elimizde birden fazla tür varsa, bunları kısa şekilde listele.\n"
                     "3. Eğer ürün tek ve netse, ürün açıklamasına dayanarak fiyatı etkileyen en önemli 2-3 faktörü açıkla (kesinlikle fiyat verme).\n"
                     "4. Yanıtın 6 cümleyi geçmesin. Açık, net ve kısa ol.bilgi verdikten sonra bakahangi konuda yardımcı olabilirim deme.\n\n"
+                    "Kibar ve nazik ol yapayzeka asistanı olsanda iyimisin gibi insanni sorualra olabildiğince insamış gibi cevapver insangibi hissettir\n\n"
                     f"Ürün Listesi:\n{product_text.strip()}\n\n"
                     f"Konuşma Geçmişi:\n{history_text.strip()}"
                 )
@@ -225,6 +227,7 @@ async def chat_handler(payload: ChatRequest):
                 "Müşteri bir sorun ya da şikayet bildiriyor olabilir.\n"
                 "Bu gibi durumlarda kullanıcıyı doğrudan iletişim numaralarına yönlendirmelisin.\n"
                 "Kibar, ilgili ve profesyonel bir şekilde mesaj ver.\n\n"
+                "Kibar ve nazik ol yapayzeka asistanı olsanda iyimisin gibi insanni sorualra olabildiğince insamış gibi cevapver insangibi hissettir\n\n"
                 "İletişim numaraları:\n"
                 "📞 +90 535 664 77 52\n"
                 "📞 +90 216 379 07 08\n\n"
@@ -260,6 +263,7 @@ async def chat_handler(payload: ChatRequest):
                 "Eğer örnek istenen şey 'market', 'mağaza', 'dükkan', 'tabela' gibi genelse, bu bağlantıyı öner:\n"
                 "👉 https://eymenreklam.com/urun-kategori/projeler/\n\n"
                 "Cevabı tamamen sen üret. Açıklayıcı, yönlendirici ve nazik bir mesaj yaz.\n\n"
+                "Kibar ve nazik ol yapayzeka asistanı olsanda iyimisin gibi insanni sorualra olabildiğince insamış gibi cevapver insangibi hissettir\n\n"
                 f"Ürün Listesi:\n{', '.join(product_names)}\n\n"
                 f"Konuşma Geçmişi:\n{history_text.strip()}"
             )
@@ -299,6 +303,7 @@ async def chat_handler(payload: ChatRequest):
                     "Ayrıca elimizdeki ürünlerin adları ve sayfa bağlantıları da listelendi.\n\n"
                     "Eğer kullanıcı belirli bir ürünle ilgileniyorsa, ilgili ürünün bağlantısını mesajda ver.\n"
                     "Eğer genel bilgi istiyorsa, şu kategori sayfasına yönlendir:\n"
+                    "Kibar ve nazik ol yapayzeka asistanı olsanda iyimisin gibi insanni sorualra olabildiğince insamış gibi cevapver insangibi hissettir\n\n"
                     "👉 https://eymenreklam.com/urun-kategori\n\n"
                     "Cevabın sade, açıklayıcı ve yönlendirici olsun.\n\n"
                     f"Ürün Listesi:\n{product_list_text.strip()}\n\n"
