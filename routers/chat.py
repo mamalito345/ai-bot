@@ -234,7 +234,8 @@ async def chat_handler(payload: ChatRequest):
                         "- bu soruları sadece örnek olsun diye verdim. eğer ürünü özellikleri buna uygun değilse bunları değil başka sorular sor\n\n"
                         "Sadece bu şekilde soru sor. Açıklama verme. Kısa ve net maddeler yaz."
                     )
-                    bot_reply = await mm.get_ai_response(req_msg, system_prompt=full_prompt)
+                    full_message = history_text.strip() + f"\nKullanıcı: {req_msg.strip()}"
+                    bot_reply = await mm.get_ai_response(full_message, system_prompt=full_prompt)
             
         elif msg_type == "[müşteri_temsili]":
             # Son 10 mesajı al
