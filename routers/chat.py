@@ -226,7 +226,7 @@ async def chat_handler(payload: ChatRequest):
             # Son 10 mesajı hazırla
             all_msgs = chat_log[client_id]["messages"]
             sorted_keys = sorted(map(int, all_msgs.keys()))
-            last_msgs = "\n".join([all_msgs[str(k)]["content"] for k in sorted_keys[-10:]])
+            last_msgs = "\n".join([all_msgs[str(k)]["content"] for k in sorted_keys[-2:]])
 
             # AI tahmini
             match_prompt = (
