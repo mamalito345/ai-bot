@@ -86,7 +86,7 @@ async def chat_handler(payload: ChatRequest):
 
         # --- Mesaj tipi
         msg_type = await mm.get_ai_response(
-            req_msg, prompt=prompt["selection"]["product"]["tr"]
+            req_msg, system_prompt=prompt["selection"]["product"]["tr"]
         )
         if msg_type == "sohbet":
             all_msgs = chat_log[client_id]["messages"]
