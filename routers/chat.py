@@ -115,7 +115,7 @@ async def chat_handler(payload: ChatRequest):
             else:
                 product_list_text = "\n".join([f"- {name}" for name in product_names])
                 full_prompt = (
-                    "Sen bir satış danışmanısın. Aşağıda elimizde bulunan ürünlerin listesi yer almakta. Bulardan hangileri kullanıcının istediği ürünle örtüşüyorsa elimizde şu ürünler var şeklinde ürünleri yaz.\n"
+                    "Sen bir satış danışmanısın. Aşağıda elimizde bulunan ürünlerin listesi yer almakta. Bulardan hangileri kullanıcının istediği ürünle örtüşüyorsa elimizde şu ürünler var şeklinde ürünleri yaz. Sonrasında başka hangi konuda yardımcı olabilirim gib bir ibare ekleme sadece elimizde bu üründne bulunmktadır de.\n"
                     f"Ürün Listesi:\n{product_list_text}"
                 )
 
@@ -175,9 +175,9 @@ async def chat_handler(payload: ChatRequest):
                 # 1. Ürün listesi (kısa açıklamalarla)
                 product_text = ""
                 for p in products:
-                    desc = p.short_description or p.description or "Açıklama yok"
-                    product_text += f"- {p.name}: {desc.strip()}\n"
-
+                    if p.short_description:
+                        product_text += f"- {p.name}: {p.short_description.strip()}\n"
+                        
                 # 2. Kullanıcının son 10 mesajı
                 all_msgs = chat_log[client_id]["messages"]
                 sorted_keys = sorted(map(int, all_msgs.keys()))
@@ -196,7 +196,7 @@ async def chat_handler(payload: ChatRequest):
                     "1. Geçmiş konuşmalara ve açıklamalara bakarak müşteri hangi ürünü istiyor, belirle.\n"
                     "2. Eğer ürün genel bir kategori ise (örneğin tabela) ve elimizde birden fazla tür varsa, bunları kısa şekilde listele.\n"
                     "3. Eğer ürün tek ve netse, ürün açıklamasına dayanarak fiyatı etkileyen en önemli 2-3 faktörü açıkla (kesinlikle fiyat verme).\n"
-                    "4. Yanıtın 7 cümleyi geçmesin. Açık, net ve kısa ol.\n\n"
+                    "4. Yanıtın 6 cümleyi geçmesin. Açık, net ve kısa ol.bilgi verdikten sonra bakahangi konuda yardımcı olabilirim deme.\n\n"
                     f"Ürün Listesi:\n{product_text.strip()}\n\n"
                     f"Konuşma Geçmişi:\n{history_text.strip()}"
                 )
