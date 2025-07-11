@@ -242,17 +242,15 @@ async def chat_handler(payload: ChatRequest):
             product_guess = await mm.get_ai_response(req_msg, system_prompt=product_prompt)
             product_name = product_guess.strip()
 
-            if product_name not in product_links:
-                bot_reply = "İlgilendiğiniz ürünü anlayamadım. Daha net ifade edebilir misiniz?"
-            else:
-                link = product_links[product_name]
-                bot_reply = (
-                    f"'{product_name}' ürünümüzle ilgilendiğinizi anladım.\n"
-                    f"Detaylar için: {link}\n\n"
-                    "**Fiyat bilgisi için lütfen bizimle iletişime geçin:**\n"
-                    "📞 +90 535 664 77 52\n"
-                    "📞 +90 216 379 07 08"
-                )
+
+            link = product_links[product_name]
+            bot_reply = (
+                f"'{product_name}' ürünümüzle ilgilendiğinizi anladım.\n"
+                f"Detaylar için: {link}\n\n"
+                "**Fiyat bilgisi için lütfen bizimle iletişime geçin:**\n"
+                "📞 +90 535 664 77 52\n"
+                "📞 +90 216 379 07 08"
+            )
             
         elif msg_type == "[müşteri_temsili]":
             # Son 10 mesajı al
