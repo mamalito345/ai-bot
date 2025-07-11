@@ -88,250 +88,226 @@ async def chat_handler(payload: ChatRequest):
         msg_type = await mm.get_ai_response(
             req_msg, prompt=prompt["selection"]["product"]["tr"]
         )
+        if msg_type == "sohbet":
+            all_msgs = chat_log[client_id]["messages"]
+            sorted_keys = sorted(map(int, all_msgs.keys()))
+            last_keys = sorted_keys[-10:]  # En fazla 10, yoksa olan kadar
 
+            history_text = ""
+            for key in last_keys:
+                m = all_msgs[str(key)]
+                who = "Kullanıcı" if m["role"] == "user" else "Bot"
+                history_text += f"{who}: {m['content']}\n"
 
-        if chat_log[client_id]["state"]["son_intent"] == "fiyat_sordu":
-            # Kullanıcının son mesajı ürünle ilgili mi?
-            resp = await client.embeddings.create(model="text-embedding-3-small", input=req_msg)
-            user_vec = np.array(resp.data[0].embedding, dtype=np.float32)
-
-            best, best_score = None, -1.0
-            with SessionLocal() as db:
-                for p in db.query(Product).filter(Product.embedding.isnot(None)):
-                    prod_vec = np.frombuffer(p.embedding, dtype=np.float32)
-                    sim = cosine(user_vec, prod_vec)
-                    if sim > best_score:
-                        best, best_score = p, sim
-
-            if best_score > 0.80:
-                chat_log[client_id]["state"]["son_urun"] = best.name
-
-                # Açıklamadan fiyat belirleyici özellikleri GPT ile çıkar
-                prompt_text = (
-                    f"Aşağıda bir ürün açıklaması var. Bu açıklamaya göre ürünün fiyatını etkileyen "
-                    f"özellikleri kısa ve maddeler halinde belirt:\n\n"
-                    f"\"\"\"\n{best.description}\n\"\"\"\n\n"
-                    f"Sadece madde madde listele, örnek: boyut, baskı tipi, ışık vs."
-                )
-
-                gpt_resp = await mm.get_ai_response("", prompt=prompt_text)
-                özellikler = gpt_resp.strip().replace("*", "👉").replace("-", "👉")
-
-                bot_reply = (
-                    f"<b>{best.name}</b> adlı ürün için fiyat bilgisi verebilmem için lütfen aşağıdaki özellikleri belirtin:\n"
-                    f"{özellikler}\n\n"
-                    f"Ürünü incelemek isterseniz: <a href='{best.permalink}'>{best.permalink}</a>"
-                )
-            else:
-                chat_log[client_id]["state"]["son_intent"] = "ürün_isteği"
-                bot_reply = (
-                    "Yeni bir ürün istiyor gibisiniz. Hemen yardımcı oluyorum.\n"
-                    "Hangi ürünü aradığınızı belirtir misiniz?"
-                )
-
-        # --- İlgili işlemi yap
+            full_prompt = (
+                prompt["chat"]["product"]["tr"].strip() + "\n\n" +
+                prompt["chat"]["connect"]["tr"].replace("{}", history_text.strip())
+            )
+            bot_reply = await mm.get_ai_response(req_msg, prompt=full_prompt)
         elif msg_type == "ürün_isteği":
-            if len(req_msg.split()) <= 3:
-                req_msg = f"{req_msg} ürünü almak istiyorum"
-
-            resp = await client.embeddings.create(
-                model="text-embedding-3-small",
-                input=req_msg
-            )
-            user_vec = np.array(resp.data[0].embedding, dtype=np.float32)
-
-            similar_products = []
             with SessionLocal() as db:
-                for p in db.query(Product).filter(Product.embedding.isnot(None)):
-                    prod_vec = np.frombuffer(p.embedding, dtype=np.float32)
-                    sim = cosine(user_vec, prod_vec)
-                    if sim > 0.80:  # Eşik değeri
-                        similar_products.append((p, sim))
+                product_names = [p.name for p in db.query(Product).all()]
 
-            similar_products.sort(key=lambda x: x[1], reverse=True)
-
-            if similar_products:
-                best = similar_products[0][0]
-                listed = ""
-                for p, score in similar_products:
-                    listed += f"🔹 <a href='{p.permalink}'>{p.name}</a>\n"
-
-                bot_reply = (
-                    f"Size en uygun ürün: <b>{best.name}</b>\n"
-                    f"İncelemek için: <a href='{best.permalink}'>{best.permalink}</a>\n\n"
-                    f"Benzer diğer ürünler:\n{listed.strip()}\n\n"
-                    "Bu ürünlerden hangisiyle ilgileniyorsunuz?"
-                )
+            if not product_names:
+                bot_reply = "Şu anda elimizde listelenmiş bir ürün bulunmamaktadır."
             else:
-                bot_reply = "Üzgünüm, benzer bir ürün bulamadım. Daha fazla bilgi verebilir misiniz?"
+                product_list_text = "\n".join([f"- {name}" for name in product_names])
+                system_prompt = (
+                    "Sen bir satış danışmanısın. Aşağıda elimizde bulunan ürünlerin listesi yer almakta. Bulardan hangileri kullanıcının istediği ürünle örtüşüyorsa elimizde şu ürünler var şeklinde ürünleri yaz.\n"
+                    f"Ürün Listesi:\n{product_list_text}"
+                )
 
+                user_prompt = req_msg.strip()
 
+                bot_reply = await mm.get_ai_response(
+                    user_message=user_prompt,
+                    system_prompt=system_prompt
+                )
         elif msg_type == "tasarım_isteği":
-            # --- Hafıza: Son 10 mesajı topla
-            all_msgs = chat_log[client_id]["messages"]
-            sorted_keys = sorted(map(int, all_msgs.keys()))
-            recent_msgs = sorted_keys[-10:]
-
-            history_text = ""
-            for key in recent_msgs:
-                m = all_msgs[str(key)]
-                who = "Kullanıcı" if m["role"] == "user" else "Bot"
-                history_text += f"{who}: {m['content']}\n"
-
-            # --- Embedding oluştur
-            enriched_input = f"{history_text.strip()}\nSon mesaj: {req_msg}"
-            resp = await client.embeddings.create(
-                model="text-embedding-3-small",
-                input=enriched_input
-            )
-            user_vec = np.array(resp.data[0].embedding, dtype=np.float32)
-
-            # --- En uygun ürünü bul
-            best, best_score = None, -1.0
+            # 1. Ürünleri veritabanından al
             with SessionLocal() as db:
-                for p in db.query(Product).filter(Product.embedding.isnot(None)):
-                    prod_vec = np.frombuffer(p.embedding, dtype=np.float32)
-                    sim = cosine(user_vec, prod_vec)
-                    if sim > best_score:
-                        best, best_score = p, sim
+                products = db.query(Product).all()
 
-            # --- Model yanıtı oluştur
-            if best:
-                prompt_text = (
-                    "Aşağıda bir müşterinin son konuşmaları ve tasarım isteği yer almaktadır.\n"
-                    "Ayrıca ürünlerimizden biri olan aşağıdaki açıklamayı da göz önünde bulundurarak, müşterinin ihtiyacına en uygun çözümü öner.\n\n"
-                    f"Kullanıcı konuşma geçmişi:\n{history_text.strip()}\n\n"
-                    f"Tasarım isteği:\n{req_msg}\n\n"
-                    f"İlgili ürün açıklaması:\n{best.description}\n\n"
-                    "Yanıt:"
+            if not products:
+                bot_reply = "Şu anda elimizde tasarım uygulanabilecek bir ürün görünmüyor."
+            else:
+                # 2. Ürün listesi (adı + kısa açıklama)
+                product_text = ""
+                for p in products:
+                    info = p.short_description or p.description or "Bilgi yok"
+                    product_text += f"- {p.name}: {info.strip()}\n"
+
+                # 3. Son 10 mesajı al
+                all_msgs = chat_log[client_id]["messages"]
+                sorted_keys = sorted(map(int, all_msgs.keys()))
+                last_keys = sorted_keys[-10:]
+
+                history_text = ""
+                for key in last_keys:
+                    m = all_msgs[str(key)]
+                    who = "Kullanıcı" if m["role"] == "user" else "Bot"
+                    history_text += f"{who}: {m['content']}\n"
+
+                # 4. Sistem promptu oluştur
+                system_prompt = (
+                    "Sen bir tasarım danışmanı asistansın. Kullanıcının yaptığı görüşme geçmişi ve "
+                    "tasarım talebine göre aşağıdaki ürünlerden hangisinin bu isteğe uygun olduğunu belirle.\n"
+                    "Ayrıca kullanıcıya yönlendirici ve açıklayıcı bir cevap ver.\n\n"
+                    f"Ürün Listesi:\n{product_text.strip()}\n\n"
+                    f"Konuşma Geçmişi:\n{history_text.strip()}"
                 )
 
-                bot_reply = await mm.get_ai_response(req_msg, prompt=prompt_text)
-            else:
-                bot_reply = "Tasarım isteğinizi anladım, ancak şu anda size uygun bir ürün belirleyemedim. Daha fazla detay verebilir misiniz?"
-
+                # 5. AI'dan cevap al
+                bot_reply = await mm.get_ai_response(
+                    user_message=req_msg,
+                    system_prompt=system_prompt
+                )
+         
         elif msg_type == "fiyat_sorgusu":
-            chat_log[client_id]["state"]["son_intent"] = "fiyat_sordu"
-            # --- Embedding oluştur (sadece son kullanıcı mesajı)
-            resp = await client.embeddings.create(
-                model="text-embedding-3-small",
-                input=req_msg
-            )
-            user_vec = np.array(resp.data[0].embedding, dtype=np.float32)
-
-            # --- Benzer ürünleri topla
-            similar_products = []
             with SessionLocal() as db:
-                for p in db.query(Product).filter(Product.embedding.isnot(None)):
-                    prod_vec = np.frombuffer(p.embedding, dtype=np.float32)
-                    sim = cosine(user_vec, prod_vec)
-                    if sim > 0.80:  # Benzerlik eşiği
-                        similar_products.append((p, sim))
+                products = db.query(Product).all()
 
-            similar_products.sort(key=lambda x: x[1], reverse=True)
-
-            if len(similar_products) == 1:
-                product = similar_products[0][0]
-                bot_reply = (
-                    f"İlgili ürün: <b>{product.name}</b>\n"
-                    f"{product.summary or product.description}\n"
-                    f"<a href='{product.permalink}' target='_blank'>Ürünü incele</a>\n\n"
-                    "Dilerseniz detaylı bilgi için bizimle iletişime geçebilirsiniz:\n"
-                    "📞 <a href='tel:+905356647752'>+90 535 664 77 52</a>\n"
-                    "📞 <a href='tel:+902163790708'>+90 216 379 07 08</a>"
-                )
-            elif len(similar_products) > 1:
-                listed = ""
-                for p, score in similar_products:
-                    listed += f"🔹 <a href='{p.permalink}'>{p.name}</a>\n"
-
-                bot_reply = (
-                    "Aşağıdaki ürünler sorunuza benzer olarak bulundu:\n\n"
-                    f"{listed.strip()}\n\n"
-                    "Bu ürünlerden hangisiyle ilgileniyorsunuz? Daha net yardımcı olabilirim."
-                )
+            if not products:
+                bot_reply = "Şu anda elimizde fiyat bilgisi verilebilecek ürün bulunmamaktadır."
             else:
-                bot_reply = (
-                    "İlgili ürün şu anda veri tabanımızda görünmüyor. "
-                    "Lütfen daha fazla detay verebilir misiniz?"
+                # 1. Ürün listesi (kısa açıklamalarla)
+                product_text = ""
+                for p in products:
+                    desc = p.short_description or p.description or "Açıklama yok"
+                    product_text += f"- {p.name}: {desc.strip()}\n"
+
+                # 2. Kullanıcının son 10 mesajı
+                all_msgs = chat_log[client_id]["messages"]
+                sorted_keys = sorted(map(int, all_msgs.keys()))
+                last_keys = sorted_keys[-10:]
+
+                history_text = ""
+                for key in last_keys:
+                    m = all_msgs[str(key)]
+                    who = "Kullanıcı" if m["role"] == "user" else "Bot"
+                    history_text += f"{who}: {m['content']}\n"
+
+                # 3. Sistem mesajı
+                system_prompt = (
+                    "Sen bir satış asistanısın. Müşteri bir ürünün fiyatını sordu.\n"
+                    "Aşağıda elimizdeki ürünlerin kısa açıklamalarıyla birlikte listesi var.\n"
+                    "Ve ayrıca kullanıcı ile yaptığın son konuşmalar yer almakta.\n\n"
+                    "Görevin şunlar:\n"
+                    "1. Son konuşmalara ve mesaja göre müşteri hangi ürünü istiyor, belirle.\n"
+                    "2. Eğer istediği ürün için birden fazla seçenek varsa (tabela isterse ama elimizde birden fazal tabela varsa ve diğer birden fazla olan ürünler için) hangi ürünü sipesifik olarak sorduğunu öğrenmek için olası ürünlerin listesini gönder.\n"
+                    "3. Eğer mesaj netse ve tek ürünse, ürünün açıklaması üzerindne ürünün fiyatını etkileyebilecek faktörleri madde madde yaz. kesinlikle asla fiyat verme \n\n"
+                    f"Ürün Listesi:\n{product_text.strip()}\n\n"
+                    f"Konuşma Geçmişi:\n{history_text.strip()}"
                 )
-            
 
-
+                # 4. AI yanıtı
+                bot_reply = await mm.get_ai_response(
+                    user_message=req_msg.strip(),
+                    system_prompt=system_prompt
+                )
         elif msg_type == "müşteri_temsili":
-            bot_reply = (
-                "Bize doğrudan ulaşmak isterseniz aşağıdaki numaralardan bize ulaşabilirsiniz:\n"
-                "📞 <a href='tel:+905356647752'>+90 535 664 77 52</a>\n"
-                "📞 <a href='tel:+902163790708'>+90 216 379 07 08</a>"
-            )
-
-        elif msg_type == "örnek_istemi":
-            bot_reply = (
-                "Önceki işlerimizi incelemek isterseniz örnek projelerimize göz atabilirsiniz:\n"
-                "<a href='https://eymenreklam.com/%C3%BCr%C3%BCn-kategori/projeler/' target='_blank'>eymenreklam.com/projeler</a>"
-            )
-
-        elif msg_type == "hizmet_ögrenme":
-            # 1. Embedding oluştur
-            resp = await client.embeddings.create(
-                model="text-embedding-3-small",
-                input=req_msg
-            )
-            user_vec = np.array(resp.data[0].embedding, dtype=np.float32)
-
-            # 2. En yakın ürünü bul (isim üzerinden)
-            best, best_score = None, -1.0
-            with SessionLocal() as db:
-                for p in db.query(Product).filter(Product.embedding.isnot(None)):
-                    prod_vec = np.frombuffer(p.embedding, dtype=np.float32)
-                    sim = cosine(user_vec, prod_vec)
-                    if sim > best_score:
-                        best, best_score = p, sim
-
-            # 3. Uygun ürün bulunduysa modelden detaylı açıklama iste
-            if best:
-                prompt_text = (
-                    "Aşağıda bir müşteri mesajı ve ona uygun ürünün açıklaması verilmiştir.\n"
-                    "Müşterinin ne istediğini ürün bilgisine göre değerlendir ve açıklayıcı, ikna edici bir yanıt ver.\n\n"
-                    f"Müşteri mesajı:\n{req_msg}\n\n"
-                    f"Ürün açıklaması:\n{best.description}\n\n"
-                    "Yanıt:"
-                )
-
-                bot_reply = await mm.get_ai_response(req_msg, prompt=prompt_text)
-            else:
-                bot_reply = "Şu an için ilgili hizmete dair bir ürün bulamadım. Hangi konuda bilgi almak istediğinizi detaylandırabilir misiniz?"
-
-
-        elif msg_type == "sohbet":
+            # Son 10 mesajı al
             all_msgs = chat_log[client_id]["messages"]
             sorted_keys = sorted(map(int, all_msgs.keys()))
-            recent_msgs = sorted_keys[-10:]
+            last_keys = sorted_keys[-10:]
 
             history_text = ""
-            for key in recent_msgs:
+            for key in last_keys:
                 m = all_msgs[str(key)]
                 who = "Kullanıcı" if m["role"] == "user" else "Bot"
                 history_text += f"{who}: {m['content']}\n"
 
-            prompt_text = prompt["chat"]["connect"]["tr"].replace("{}", history_text.strip())
-            bot_reply = await mm.get_ai_response(req_msg, prompt=prompt_text)
+            # Sistem prompt
+            system_prompt = (
+                "Sen bir satış sonrası destek asistanısın. Aşağıda müşteri ile yapılan son konuşma yer almakta.\n"
+                "Müşteri bir sorun ya da şikayet bildiriyor olabilir.\n"
+                "Bu gibi durumlarda kullanıcıyı doğrudan iletişim numaralarına yönlendirmelisin.\n"
+                "Kibar, ilgili ve profesyonel bir şekilde mesaj ver.\n\n"
+                "İletişim numaraları:\n"
+                "📞 +90 535 664 77 52\n"
+                "📞 +90 216 379 07 08\n\n"
+                f"Konuşma Geçmişi:\n{history_text.strip()}"
+            )
 
-        else:
-            bot_reply = "Mesajınızı tam anlayamadım. Ne hakkında konuşmak istersiniz?"
+            # AI yanıtı üret
+            bot_reply = await mm.get_ai_response(
+                user_message=req_msg.strip(),
+                system_prompt=system_prompt
+            )
+        if msg_type == "örnek_istemi":
+            # 1. Ürün isimlerini veritabanından al
+            with SessionLocal() as db:
+                product_names = [p.name for p in db.query(Product).all()]
 
-        # --- Bot mesajını ekle
-        messages[str(int(next_idx) + 1)] = {
-            "role": "bot",
-            "content": bot_reply,
-            "timestamp": datetime.now().isoformat()
-        }
+            # 2. Son 10 mesajı al
+            all_msgs = chat_log[client_id]["messages"]
+            sorted_keys = sorted(map(int, all_msgs.keys()))
+            last_keys = sorted_keys[-10:]
 
-        # --- Güncel logu kaydet
-        with open(LOG_FILE, "w", encoding="utf-8") as f:
-            json.dump(chat_log, f, ensure_ascii=False, indent=2)
+            history_text = ""
+            for key in last_keys:
+                m = all_msgs[str(key)]
+                who = "Kullanıcı" if m["role"] == "user" else "Bot"
+                history_text += f"{who}: {m['content']}\n"
 
-        return {"reply": bot_reply}
+            # 3. Sistem prompt
+            system_prompt = (
+                "Sen bir reklam firmasında çalışan dijital asistan botsun. Kullanıcıyla yapılan son görüşmeler aşağıda verilmiştir.\n"
+                "Kullanıcı örnek işler görmek istiyor. Aşağıda firmanın sunduğu ürünlerin isimleri de yer alıyor.\n"
+                "Amacın, konuşma geçmişine ve son mesaja göre kullanıcı hangi ürünün örneklerini görmek istiyor, bunu tahmin etmektir.\n\n"
+                "Eğer örnek istenen şey 'market', 'mağaza', 'dükkan', 'tabela' gibi genelse, bu bağlantıyı öner:\n"
+                "👉 https://eymenreklam.com/urun-kategori/projeler/\n\n"
+                "Cevabı tamamen sen üret. Açıklayıcı, yönlendirici ve nazik bir mesaj yaz.\n\n"
+                f"Ürün Listesi:\n{', '.join(product_names)}\n\n"
+                f"Konuşma Geçmişi:\n{history_text.strip()}"
+            )
+
+            # 4. AI yanıtı
+            bot_reply = await mm.get_ai_response(
+                user_message=req_msg.strip(),
+                system_prompt=system_prompt
+            )
+        elif msg_type == "hizmet_ögrenme":
+            # 1. Ürün adı ve permalinklerini al
+            with SessionLocal() as db:
+                products = db.query(Product).all()
+
+            if not products:
+                bot_reply = "Şu anda sunulan hizmet bilgileri sistemde yer almıyor."
+            else:
+                # 2. Ürün adı + link formatla
+                product_list_text = "\n".join(
+                    [f"- {p.name}: {p.permalink}" for p in products if p.permalink]
+                )
+
+                # 3. Son 10 mesajı al
+                all_msgs = chat_log[client_id]["messages"]
+                sorted_keys = sorted(map(int, all_msgs.keys()))
+                last_keys = sorted_keys[-10:]
+
+                history_text = ""
+                for key in last_keys:
+                    m = all_msgs[str(key)]
+                    who = "Kullanıcı" if m["role"] == "user" else "Bot"
+                    history_text += f"{who}: {m['content']}\n"
+
+                # 4. Sistem prompt
+                system_prompt = (
+                    "Sen bir reklam firmasında çalışan dijital asistansın. Kullanıcının son mesajları aşağıda yer alıyor.\n"
+                    "Ayrıca elimizdeki ürünlerin adları ve sayfa bağlantıları da listelendi.\n\n"
+                    "Eğer kullanıcı belirli bir ürünle ilgileniyorsa, ilgili ürünün bağlantısını mesajda ver.\n"
+                    "Eğer genel bilgi istiyorsa, şu kategori sayfasına yönlendir:\n"
+                    "👉 https://eymenreklam.com/urun-kategori\n\n"
+                    "Cevabın sade, açıklayıcı ve yönlendirici olsun.\n\n"
+                    f"Ürün Listesi:\n{product_list_text.strip()}\n\n"
+                    f"Konuşma Geçmişi:\n{history_text.strip()}"
+                )
+
+                # 5. AI yanıtı
+                bot_reply = await mm.get_ai_response(
+                    user_message=req_msg.strip(),
+                    system_prompt=system_prompt
+                )
 
     except Exception as e:
         import traceback
