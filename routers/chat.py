@@ -223,34 +223,45 @@ async def chat_handler(payload: ChatRequest):
                 "Display Ürünler": "https://eymenreklam.com/urun-kategori/display-urunler/"
             }
 
-            # Son 10 mesajı topla
-            all_msgs = chat_log[client_id]["messages"]
-            sorted_keys = sorted(map(int, all_msgs.keys()))
-            last_msgs = "\n".join(
-                [all_msgs[str(k)]["content"] for k in sorted_keys[-10:]]
-            )
+            # Eğer önceki ürünü hatırlıyorsak onu kullan
+            product_name = chat_log[client_id]["state"].get("son_urun")
 
-            # AI ile eşleşen ürün adı tespiti
-            product_prompt = (
-                "Aşağıda müşterinin son mesajları yer almakta. Bu mesajlara göre müşteri hangi ürünle ilgileniyor?\n"
-                "Sadece aşağıdaki ürün isimlerinden birini seç:\n" +
-                "\n".join(f"- {p}" for p in product_links.keys()) +
-                "\n\nSadece ürün adını yaz. Açıklama ekleme.\n\n"
-                f"{last_msgs}"
-            )
+            if not product_name:
+                # Son 10 mesajı birleştir
+                all_msgs = chat_log[client_id]["messages"]
+                sorted_keys = sorted(map(int, all_msgs.keys()))
+                last_msgs = "\n".join([all_msgs[str(k)]["content"] for k in sorted_keys[-10:]])
 
-            product_guess = await mm.get_ai_response(req_msg, system_prompt=product_prompt)
-            product_name = product_guess.strip()
+                # AI'dan en yakın ürün ismini seçmesini iste
+                match_prompt = (
+                    "Aşağıda bir müşterinin mesajları yer almakta. Müşteri bu mesajlara göre hangi ürünle ilgileniyor?\n"
+                    "Sadece aşağıdaki ürün listesinden en uygun olanın tam adını yaz:\n" +
+                    "\n".join(f"- {p}" for p in product_links.keys()) +
+                    "\n\nSadece ürün adını yaz. Açıklama ekleme.\n\n"
+                    f"{last_msgs}"
+                )
 
+                product_guess = await mm.get_ai_response(req_msg, system_prompt=match_prompt)
+                product_name = product_guess.strip()
+                chat_log[client_id]["state"]["son_urun"] = product_name  # Hafızaya al
 
-            link = product_links[product_name]
-            bot_reply = (
-                f"'{product_name}' ürünümüzle ilgilendiğinizi anladım.\n"
-                f"Detaylar için: {link}\n\n"
-                "**Fiyat bilgisi için lütfen bizimle iletişime geçin:**\n"
-                "📞 +90 535 664 77 52\n"
-                "📞 +90 216 379 07 08"
-            )
+            # Linki getir (AI'nin verdiği ürün ismiyle)
+            link = product_links.get(product_name)
+
+            if link:
+                bot_reply = (
+                    f"'{product_name}' ürünümüzle ilgilendiğinizi anladım.\n"
+                    f"Detaylar için: {link}\n\n"
+                    "**Fiyat bilgisi için lütfen bizimle iletişime geçin:**\n"
+                    "📞 +90 535 664 77 52\n"
+                    "📞 +90 216 379 07 08"
+                )
+            else:
+                bot_reply = (
+                    f"'{product_name}' adlı ürün sistemimizde kayıtlı değil gibi görünüyor.\n"
+                    "Lütfen tam ürün adını tekrar eder misiniz ya da başka bir ifade ile belirtir misiniz?"
+                )
+
             
         elif msg_type == "[müşteri_temsili]":
             # Son 10 mesajı al
