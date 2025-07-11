@@ -201,14 +201,14 @@ async def chat_handler(payload: ChatRequest):
             )
 
             # Aşama 1 Prompt
-            prompt = (
+            full_prompt = (
                 "Aşağıda elimizdeki ürün isimleri ve müşteri ile son konuşmalar yer alıyor.\n"
                 "Lütfen müşteri hangi ürünü istiyor sadece bunu belirle. Sadece ürün adını yaz. Açıklama ekleme.\n\n"
                 f"Ürünler:\n" + "\n".join([f"- {n}" for n in product_names]) + "\n\n"
                 f"Konuşma:\n{history_text.strip()}"
             )
 
-            product_guess = await mm.get_ai_response(req_msg, prompt=prompt)
+            product_guess = await mm.get_ai_response(req_msg, system_prompt=full_prompt)
             product_name = product_guess.strip()
 
             if not product_name:
@@ -220,7 +220,7 @@ async def chat_handler(payload: ChatRequest):
                 if not product or not product.short_description:
                     bot_reply = f"{product_name} ürünü hakkında detaylı bilgiye ulaşılamadı."
                 else:
-                    prompt = (
+                    full_prompt = (
                         f"Aşağıda {product_name} adlı ürünün kısa açıklaması yer almakta:\n\n"
                         f"{product.short_description.strip()}\n\n"
                         "Sen bir satış danışmanısın. Müşteri bu ürünle ilgileniyor. "
@@ -234,7 +234,7 @@ async def chat_handler(payload: ChatRequest):
                         "- bu soruları sadece örnek olsun diye verdim. eğer ürünü özellikleri buna uygun değilse bunları değil başka sorular sor\n\n"
                         "Sadece bu şekilde soru sor. Açıklama verme. Kısa ve net maddeler yaz."
                     )
-                    bot_reply = await mm.get_ai_response(req_msg, prompt=prompt)
+                    bot_reply = await mm.get_ai_response(req_msg, system_prompt=full_prompt)
             
         elif msg_type == "[müşteri_temsili]":
             # Son 10 mesajı al
