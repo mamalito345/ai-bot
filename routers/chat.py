@@ -223,10 +223,10 @@ async def chat_handler(payload: ChatRequest):
                 "Display Ürünler": "https://eymenreklam.com/urun-kategori/display-urunler/"
             }
 
-            # Son 10 mesajı hazırla
+            # Son 3 mesajı al
             all_msgs = chat_log[client_id]["messages"]
             sorted_keys = sorted(map(int, all_msgs.keys()))
-            last_msgs = "\n".join([all_msgs[str(k)]["content"] for k in sorted_keys[-2:]])
+            last_msgs = "\n".join([all_msgs[str(k)]["content"] for k in sorted_keys[-3:]])
 
             # AI tahmini
             match_prompt = (
@@ -240,11 +240,15 @@ async def chat_handler(payload: ChatRequest):
             product_guess = await mm.get_ai_response(req_msg, system_prompt=match_prompt)
             product_name = product_guess.strip()
 
-            link = product_links.get(product_name)
+            # Gelen isimle eşleşmeye çalış (case insensitive, yakın eşleşme)
+            matched_name = next(
+                (key for key in product_links if product_name.lower() in key.lower()), None
+            )
 
-            if link:
+            if matched_name:
+                link = product_links[matched_name]
                 bot_reply = (
-                    f"'{product_name}' ürünümüzle ilgilendiğinizi anladım.\n"
+                    f"'{matched_name}' ürünümüzle ilgilendiğinizi anladım.\n"
                     f"Detaylar için: {link}\n\n"
                     "**Fiyat bilgisi için lütfen bizimle iletişime geçin:**\n"
                     "📞 +90 535 664 77 52\n"
