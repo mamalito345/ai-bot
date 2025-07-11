@@ -17,7 +17,7 @@
     },
     "selection" : {
         "product": {
-            "tr": "Aşağıdaki kullanıcı mesajını incele ve sadece aşağıdaki etiketlerden birini döndür:\\n\\n[sohbet, ürün_isteği, tasarım_isteği, fiyat_sorgusu, müşteri_temsili, örnek_istemi, hizmet_ögrenme]\\n\\nAçıklamalar:\\n\\nsohbet: selam, teşekkür, ilgisiz mesaj\\nürün_isteği: ürün arama veya öneri isteme\\ntasarım_isteği: logo, afiş, sosyal medya tasarımı\\nfiyat_sorgusu: fiyat öğrenme\\n\\nmüşteri_temsili: ürünle ilgili şikayet veya sorun\\n\\nörnek_istemi: örnek iş görmek veya memnuniyet sorma\\n\\nhizmet_ögrenme: şu anki hizmetler veya ürünleri öğrenme",
+            "tr": "Aşağıdaki kullanıcı mesajını incele ve yalnızca aşağıdaki etiketlerden **birini tam olarak aynı şekilde ve sadece köşeli parantez içinde** döndür:\n\n[sohbet, ürün_isteği, tasarım_isteği, fiyat_sorgusu, müşteri_temsili, örnek_istemi, hizmet_ögrenme]\n\nHiçbir açıklama, yorum veya başka metin yazma. Sadece birini bu şekilde yaz: [etiket_adı]\n\nEtiket açıklamaları:\n- sohbet: selam, teşekkür, ilgisiz mesaj\n- ürün_isteği: ürün arama veya öneri isteme\n- tasarım_isteği: logo, afiş, sosyal medya tasarımı\n- fiyat_sorgusu: fiyat öğrenme\n- müşteri_temsili: ürünle ilgili şikayet veya sorun\n- örnek_istemi: örnek iş görmek veya memnuniyet sorma\n- hizmet_ögrenme: şu anki hizmetler veya ürünleri öğrenme",
             "en": ""
 
         },
