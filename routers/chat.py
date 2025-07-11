@@ -126,7 +126,7 @@ async def chat_handler(payload: ChatRequest):
 
         elif msg_type == "[ürün_isteği]":
             with SessionLocal() as db:
-                product_names = [p.name for p in db.query(Product).all()]
+                product_names = [name for (name,) in db.query(Product.name).all()]
                 product_count = db.query(Product).count()
                 print(f"Toplam ürün sayısı: {product_count}")
 
