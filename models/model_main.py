@@ -16,7 +16,7 @@ async def get_ai_response(user_message: str, system_prompt: str) -> str:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_message}
             ],
-            temperature=0.7
+            temperature=0.2
         )
         usage = response.usage  # type: openai.types.CompletionUsage
         if usage:

@@ -133,7 +133,7 @@ async def chat_handler(payload: ChatRequest):
             else:
                 product_list_text = "\n".join([f"- {name}" for name in product_names])
                 full_prompt = (
-                    "Sen bir satış danışmanısın. Aşağıda elimizde bulunan ürünlerin listesi yer almakta. Bulardan hangileri kullanıcının istediği ürünle örtüşüyorsa elimizde şu ürünler var şeklinde ürünleri yaz. Sonrasında başka hangi konuda yardımcı olabilirim gib bir ibare ekleme sadece elimizde bu üründne bulunmktadır de.Kibar ve nazik ol yapayzeka asistanı olsanda iyimisin gibi insanni sorualra olabildiğince insamış gibi cevapver insangibi hissettir\n"
+                    "Sen bir satış danışmanısın. Aşağıda elimizde bulunan ürünlerin listesi yer almakta. Bulardan hangileri kullanıcının istediği ürünle örtüşüyorsa elimizde şu ürünler var şeklinde ürünleri yaz. Sonrasında başka hangi konuda yardımcı olabilirim gib bir ibare ekleme sadece elimizde bu üründne bulunmktadır de.Kibar ve nazik ol yapayzeka asistanı olsanda iyimisin gibi insanni sorualra olabildiğince insamış gibi cevapver insangibi hissettir\n tüm cevapların: 'elimizde (ürünün ismi) ürününden bulunaktadır. şeklind bitsin mesajların' "
                     f"Ürün Listesi:\n{product_list_text}"
                 )
 
