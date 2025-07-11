@@ -291,11 +291,6 @@ async def chat_handler(payload: ChatRequest):
                 "İlgilendiğiniz özel bir hizmet varsa, o alanda da örnek sunabilirim. 😊"
             )
 
-            # 4. AI yanıtı
-            bot_reply = await mm.get_ai_response(
-                user_message=req_msg.strip(),
-                system_prompt=full_prompt
-            )
         elif msg_type == "[hizmet_ögrenme]":
             bot_reply = (
                 "Tüm ürün ve hizmetlerimizi aşağıdaki bağlantıdan inceleyebilirsiniz:\n"
