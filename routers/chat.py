@@ -237,7 +237,7 @@ async def chat_handler(payload: ChatRequest):
                 "Cevap olarak sadece bu yapıyı gönder:\n"
                 "\n"
                 "Ürün: [ürün adı]\n"
-                "Link: [link]\n\n"
+                "Link: [link]\n"
                 "İletişim numaraları:\n"
                 "📞 +90 535 664 77 52\n"
                 "📞 +90 216 379 07 08\n\n"
