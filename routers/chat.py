@@ -103,7 +103,8 @@ async def chat_handler(payload: ChatRequest):
                 prompt["chat"]["product"]["tr"].strip() + "\n\n" +
                 prompt["chat"]["connect"]["tr"].replace("{}", history_text.strip())
             )
-            bot_reply = await mm.get_ai_response(req_msg, prompt=full_prompt)
+            bot_reply = await mm.get_ai_response(user_message, system_prompt=full_prompt)
+
         elif msg_type == "ürün_isteği":
             with SessionLocal() as db:
                 product_names = [p.name for p in db.query(Product).all()]
