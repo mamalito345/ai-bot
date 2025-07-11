@@ -223,42 +223,31 @@ async def chat_handler(payload: ChatRequest):
                 "Display Ürünler": "https://eymenreklam.com/urun-kategori/display-urunler/"
             }
 
-            # Son 3 mesajı al
+            # Son 3 mesaj + şu anki mesaj
             all_msgs = chat_log[client_id]["messages"]
             sorted_keys = sorted(map(int, all_msgs.keys()))
-            last_msgs = "\n".join([all_msgs[str(k)]["content"] for k in sorted_keys[-3:]])
+            recent_msgs = [all_msgs[str(k)]["content"] for k in sorted_keys[-3:]]
+            recent_msgs.append(req_msg)
+            full_convo = "\n".join(recent_msgs)
 
-            # AI tahmini
-            match_prompt = (
-                "Aşağıda bir müşterinin mesaj geçmişi yer almakta. Bu mesajlara göre müşteri aşağıdaki ürünlerden hangisiyle ilgileniyor?\n"
-                "Sadece aşağıdaki ürün isimlerinden en uygun olanı seç ve sadece ürünün adını yaz:\n" +
-                "\n".join(f"- {p}" for p in product_links.keys()) +
-                "\n\nAçıklama yapma. Sadece ürün adını yaz:\n\n" +
-                last_msgs
+            # AI'ye verilecek prompt
+            full_prompt = (
+                "Sen bir reklam firmasında çalışan satış temsilcisisin. Müşteriyle aranda geçen mesajlaşmalar aşağıda verilmiştir.\n"
+                "Müşterinin fiyatını sorduğu ürünü belirle ve aşağıdaki ürün listesinde bu ürünün linkini bul.\n"
+                "Cevap olarak sadece bu yapıyı gönder:\n"
+                "\n"
+                "Ürün: [ürün adı]\n"
+                "Link: [link]\n\n"
+                "İletişim numaraları:\n"
+                "📞 +90 535 664 77 52\n"
+                "📞 +90 216 379 07 08\n\n"
+                "Sadece aşağıdaki ürünlerden biri olabilir:\n" +
+                "\n".join([f"- {key}: {url}" for key, url in product_links.items()]) +
+                "\n\nMesajlar:\n" + full_convo
             )
 
-            product_guess = await mm.get_ai_response(req_msg, system_prompt=match_prompt)
-            product_name = product_guess.strip()
-
-            # Gelen isimle eşleşmeye çalış (case insensitive, yakın eşleşme)
-            matched_name = next(
-                (key for key in product_links if product_name.lower() in key.lower()), None
-            )
-
-            if matched_name:
-                link = product_links[matched_name]
-                bot_reply = (
-                    f"'{matched_name}' ürünümüzle ilgilendiğinizi anladım.\n"
-                    f"Detaylar için: {link}\n\n"
-                    "**Fiyat bilgisi için lütfen bizimle iletişime geçin:**\n"
-                    "📞 +90 535 664 77 52\n"
-                    "📞 +90 216 379 07 08"
-                )
-            else:
-                bot_reply = (
-                    f"'{product_name}' adlı ürün sitemizde tam olarak bulunamadı.\n"
-                    "Lütfen ürün adını net bir şekilde tekrar eder misiniz?"
-                )
+            ai_output = await mm.get_ai_response(req_msg, system_prompt=full_prompt)
+            bot_reply = ai_output.strip()
 
 
             
