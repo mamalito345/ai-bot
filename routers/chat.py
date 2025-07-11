@@ -104,6 +104,7 @@ async def chat_handler(payload: ChatRequest):
                 prompt["chat"]["connect"]["tr"].replace("{}", history_text.strip())
             )
             bot_reply = await mm.get_ai_response(user_message=req_msg, system_prompt=full_prompt)
+            
 
         elif msg_type == "ürün_isteği":
             with SessionLocal() as db:
@@ -310,6 +311,7 @@ async def chat_handler(payload: ChatRequest):
                     system_prompt=full_prompt
                 )
         return ChatResponse(reply=bot_reply)
+        print(msg_type)
     except Exception as e:
         import traceback
         print("❌ chat_handler hatası:")
