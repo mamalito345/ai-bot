@@ -310,8 +310,8 @@ async def chat_handler(payload: ChatRequest):
                     user_message=req_msg.strip(),
                     system_prompt=full_prompt
                 )
-        return ChatResponse(reply=bot_reply)
         print(msg_type)
+        return ChatResponse(reply=bot_reply)
     except Exception as e:
         import traceback
         print("❌ chat_handler hatası:")
