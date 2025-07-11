@@ -11,7 +11,7 @@ client = AsyncOpenAI(api_key=settings.openai_api_key)
 async def get_ai_response(user_message: str, system_prompt: str) -> str:
     try:
         response = await client.chat.completions.create(
-            model="gpt-3.5-turbo",  # gpt-3.5-turbo
+            model="gpt-4o-mini-2025-04-14",  # gpt-3.5-turbo
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_message}
