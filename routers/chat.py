@@ -295,6 +295,17 @@ async def chat_handler(payload: ChatRequest):
                 "Merak ettiğiniz özel bir ürün varsa detaylıca yardımcı olabilirim. 😊"
             )
         print(msg_type)
+        messages = chat_log[client_id]["messages"]
+        next_idx = str(max(map(int, messages.keys()), default=-1) + 1)
+
+        # --- Kullanıcı mesajını ekle
+        messages[next_idx] = {
+            "role": "bot",
+            "content": bot_reply,
+            "timestamp": datetime.now().isoformat()
+        }
+        with open(LOG_FILE, "w", encoding="utf-8") as f:
+            json.dump(chat_log, f, ensure_ascii=False, indent=2)
         return ChatResponse(reply=bot_reply)
     except Exception as e:
         import traceback
