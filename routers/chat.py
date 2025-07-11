@@ -135,8 +135,19 @@ async def chat_handler(payload: ChatRequest):
             else:
                 product_list_text = "\n".join([f"- {name}" for name in product_names])
                 full_prompt = (
-                    "Sen bir satış danışmanısın. Aşağıda elimizde bulunan ürünlerin listesi yer almakta. Bulardan hangileri kullanıcının istediği ürünle örtüşüyorsa elimizde şu ürünler var şeklinde ürünleri yaz. Sonrasında başka hangi konuda yardımcı olabilirim gib bir ibare ekleme sadece elimizde bu üründne bulunmktadır de.Kibar ve nazik ol yapayzeka asistanı olsanda iyimisin gibi insanni sorualra olabildiğince insamış gibi cevapver insangibi hissettir\n tüm cevapların: 'elimizde (ürünün ismi) ürününden bulunaktadır. şeklind bitsin mesajların' "
-                    f"Ürün Listesi:\n{product_list_text}"
+                    "Sen bir satış danışmanısın. aşşağıda elimizde buluna ürün kategoryleri linkleri bulunkata bu kategorylerden hangisine daha yankınsa müşterinin isteği o kategory linkini at "
+                    "https://eymenreklam.com/urun-kategori/tabela/"
+                    "https://eymenreklam.com/urun-kategori/arac-folyo-kaplama/"
+                    "https://eymenreklam.com/urun-kategori/branda-bez-afis-baski/"
+                    "https://eymenreklam.com/urun-kategori/cephe-giydirme/"
+                    "https://eymenreklam.com/urun-kategori/folyo-etiket-kesim/"
+                    "https://eymenreklam.com/urun-kategori/cam-folyo-uygulamalari/"
+                    "https://eymenreklam.com/urun-kategori/lightbox-uygulamalari/"
+                    "https://eymenreklam.com/urun-kategori/cut-out-maket/"
+                    "https://eymenreklam.com/urun-kategori/fotoblok-baski/"
+                    "https://eymenreklam.com/urun-kategori/magaza-reklam-uygulamalari/"
+                    "https://eymenreklam.com/urun-kategori/is-guvenlik-levhalari/"
+                    "https://eymenreklam.com/urun-kategori/display-urunler/"
                 )
 
                 user_prompt = req_msg.strip()
