@@ -86,7 +86,7 @@ async def chat_handler(payload: ChatRequest):
 
         # --- Mesaj tipi
         msg_type = await mm.get_ai_response(
-            req_msg, system_prompt=prompt["selection"]["product"]["tr"]
+            user_message=req_msg, system_prompt=prompt["selection"]["product"]["tr"]
         )
         if msg_type == "sohbet":
             all_msgs = chat_log[client_id]["messages"]
@@ -113,7 +113,7 @@ async def chat_handler(payload: ChatRequest):
                 bot_reply = "Şu anda elimizde listelenmiş bir ürün bulunmamaktadır."
             else:
                 product_list_text = "\n".join([f"- {name}" for name in product_names])
-                prompt = (
+                full_prompt = (
                     "Sen bir satış danışmanısın. Aşağıda elimizde bulunan ürünlerin listesi yer almakta. Bulardan hangileri kullanıcının istediği ürünle örtüşüyorsa elimizde şu ürünler var şeklinde ürünleri yaz.\n"
                     f"Ürün Listesi:\n{product_list_text}"
                 )
@@ -122,7 +122,7 @@ async def chat_handler(payload: ChatRequest):
 
                 bot_reply = await mm.get_ai_response(
                     user_message=user_prompt,
-                    system_prompt=prompt
+                    system_prompt=full_prompt
                 )
         elif msg_type == "tasarım_isteği":
             # 1. Ürünleri veritabanından al
@@ -150,7 +150,7 @@ async def chat_handler(payload: ChatRequest):
                     history_text += f"{who}: {m['content']}\n"
 
                 # 4. Sistem promptu oluştur
-                prompt = (
+                full_prompt = (
                     "Sen bir tasarım danışmanı asistansın. Kullanıcının yaptığı görüşme geçmişi ve "
                     "tasarım talebine göre aşağıdaki ürünlerden hangisinin bu isteğe uygun olduğunu belirle.\n"
                     "Ayrıca kullanıcıya yönlendirici ve açıklayıcı bir cevap ver.\n\n"
@@ -161,7 +161,7 @@ async def chat_handler(payload: ChatRequest):
                 # 5. AI'dan cevap al
                 bot_reply = await mm.get_ai_response(
                     user_message=req_msg,
-                    system_prompt=prompt
+                    system_prompt=full_prompt
                 )
          
         elif msg_type == "fiyat_sorgusu":
@@ -189,7 +189,7 @@ async def chat_handler(payload: ChatRequest):
                     history_text += f"{who}: {m['content']}\n"
 
                 # 3. Sistem mesajı
-                prompt = (
+                full_prompt = (
                     "Sen bir satış asistanısın. Müşteri bir ürünün fiyatını sordu.\n"
                     "Aşağıda elimizdeki ürünlerin kısa açıklamalarıyla birlikte listesi var.\n"
                     "Ve ayrıca kullanıcı ile yaptığın son konuşmalar yer almakta.\n\n"
@@ -204,7 +204,7 @@ async def chat_handler(payload: ChatRequest):
                 # 4. AI yanıtı
                 bot_reply = await mm.get_ai_response(
                     user_message=req_msg.strip(),
-                    system_prompt=prompt
+                    system_prompt=full_prompt
                 )
         elif msg_type == "müşteri_temsili":
             # Son 10 mesajı al
@@ -219,7 +219,7 @@ async def chat_handler(payload: ChatRequest):
                 history_text += f"{who}: {m['content']}\n"
 
             # Sistem prompt
-            prompt = (
+            full_prompt = (
                 "Sen bir satış sonrası destek asistanısın. Aşağıda müşteri ile yapılan son konuşma yer almakta.\n"
                 "Müşteri bir sorun ya da şikayet bildiriyor olabilir.\n"
                 "Bu gibi durumlarda kullanıcıyı doğrudan iletişim numaralarına yönlendirmelisin.\n"
@@ -233,7 +233,7 @@ async def chat_handler(payload: ChatRequest):
             # AI yanıtı üret
             bot_reply = await mm.get_ai_response(
                 user_message=req_msg.strip(),
-                system_prompt=prompt
+                system_prompt=full_prompt
             )
         if msg_type == "örnek_istemi":
             # 1. Ürün isimlerini veritabanından al
@@ -252,7 +252,7 @@ async def chat_handler(payload: ChatRequest):
                 history_text += f"{who}: {m['content']}\n"
 
             # 3. Sistem prompt
-            prompt = (
+            full_prompt = (
                 "Sen bir reklam firmasında çalışan dijital asistan botsun. Kullanıcıyla yapılan son görüşmeler aşağıda verilmiştir.\n"
                 "Kullanıcı örnek işler görmek istiyor. Aşağıda firmanın sunduğu ürünlerin isimleri de yer alıyor.\n"
                 "Amacın, konuşma geçmişine ve son mesaja göre kullanıcı hangi ürünün örneklerini görmek istiyor, bunu tahmin etmektir.\n\n"
@@ -266,7 +266,7 @@ async def chat_handler(payload: ChatRequest):
             # 4. AI yanıtı
             bot_reply = await mm.get_ai_response(
                 user_message=req_msg.strip(),
-                system_prompt=prompt
+                system_prompt=full_prompt
             )
         elif msg_type == "hizmet_ögrenme":
             # 1. Ürün adı ve permalinklerini al
@@ -293,7 +293,7 @@ async def chat_handler(payload: ChatRequest):
                     history_text += f"{who}: {m['content']}\n"
 
                 # 4. Sistem prompt
-                prompt = (
+                full_prompt = (
                     "Sen bir reklam firmasında çalışan dijital asistansın. Kullanıcının son mesajları aşağıda yer alıyor.\n"
                     "Ayrıca elimizdeki ürünlerin adları ve sayfa bağlantıları da listelendi.\n\n"
                     "Eğer kullanıcı belirli bir ürünle ilgileniyorsa, ilgili ürünün bağlantısını mesajda ver.\n"
@@ -307,7 +307,7 @@ async def chat_handler(payload: ChatRequest):
                 # 5. AI yanıtı
                 bot_reply = await mm.get_ai_response(
                     user_message=req_msg.strip(),
-                    system_prompt=prompt
+                    system_prompt=full_prompt
                 )
         return ChatResponse(reply=bot_reply)
     except Exception as e:
