@@ -135,7 +135,7 @@ async def chat_handler(payload: ChatRequest):
             else:
                 product_list_text = "\n".join([f"- {name}" for name in product_names])
                 full_prompt = (
-                    "Sen bir satış danışmanısın. aşşağıda elimizde buluna ürün kategoryleri linkleri bulunkata bu kategorylerden hangisine daha yankınsa müşterinin isteği o kategory linkini at "
+                    "Sen bir satış danışmanısın. aşşağıda elimizde buluna ürün kategoryleri linkleri bulunkata bu kategorylerden hangisine daha yankınsa müşterinin isteği o kategory linkini at. vericeğin mesaj 2 cümleden oluşsun. ürünlerimizi burdan inceleyebilirsiniz ve link"
                     "https://eymenreklam.com/urun-kategori/tabela/"
                     "https://eymenreklam.com/urun-kategori/arac-folyo-kaplama/"
                     "https://eymenreklam.com/urun-kategori/branda-bez-afis-baski/"
