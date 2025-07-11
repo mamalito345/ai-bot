@@ -191,16 +191,16 @@ async def chat_handler(payload: ChatRequest):
 
                 # 3. Sistem mesajı
                 full_prompt = (
-                    "Sen bir satış asistanısın. Müşteri bir ürünün fiyatını sordu.\n"
-                    "Aşağıda elimizdeki ürünlerin kısa açıklamalarıyla birlikte listesi var.\n"
-                    "Ve ayrıca kullanıcı ile yaptığın son konuşmalar yer almakta.\n\n"
-                    "Görevin şunlar:\n"
-                    "1. Son konuşmalara ve mesaja göre müşteri hangi ürünü istiyor, belirle.\n"
-                    "2. Eğer istediği ürün için birden fazla seçenek varsa (tabela isterse ama elimizde birden fazal tabela varsa ve diğer birden fazla olan ürünler için) hangi ürünü sipesifik olarak sorduğunu öğrenmek için olası ürünlerin listesini gönder.\n"
-                    "3. Eğer mesaj netse ve tek ürünse, ürünün açıklaması üzerindne ürünün fiyatını etkileyebilecek faktörleri madde madde yaz. kesinlikle asla fiyat verme \n\n"
+                    "Sen bir satış asistanısın. Aşağıda elimizdeki ürünlerin kısa açıklamaları ve müşteriyle yapılan son konuşmalar yer alıyor.\n\n"
+                    "Görevin:\n"
+                    "1. Geçmiş konuşmalara ve açıklamalara bakarak müşteri hangi ürünü istiyor, belirle.\n"
+                    "2. Eğer ürün genel bir kategori ise (örneğin tabela) ve elimizde birden fazla tür varsa, bunları kısa şekilde listele.\n"
+                    "3. Eğer ürün tek ve netse, ürün açıklamasına dayanarak fiyatı etkileyen en önemli 2-3 faktörü açıkla (kesinlikle fiyat verme).\n"
+                    "4. Yanıtın 7 cümleyi geçmesin. Açık, net ve kısa ol.\n\n"
                     f"Ürün Listesi:\n{product_text.strip()}\n\n"
                     f"Konuşma Geçmişi:\n{history_text.strip()}"
                 )
+
 
                 # 4. AI yanıtı
                 bot_reply = await mm.get_ai_response(
