@@ -183,11 +183,21 @@ async def chat_handler(payload: ChatRequest):
 
                 # 4. Sistem promptu oluştur
                 full_prompt = (
-                    "Sen bir tasarım danışmanı asistansın. Kullanıcının yaptığı görüşme geçmişi ve "
-                    "tasarım talebine göre aşağıdaki ürünlerden hangisinin bu isteğe uygun olduğunu belirle.\n"
-                    "Ayrıca kullanıcıya yönlendirici ve açıklayıcı bir cevap ver.\n\n"
-                    "Kibar ve nazik ol yapayzeka asistanı olsanda iyimisin gibi insanni sorualra olabildiğince insamış gibi cevapver insangibi hissettir\n\n"
-                    f"Ürün Listesi:\n{product_text.strip()}\n\n"
+                    "Sen eymen reklema ajansının yapayzeka canlı destek asistansın. Kullanıcının yaptığı görüşme geçmişi ve "
+                    "Kibar ve nazik ol yapayzeka asistanı olsanda iyimisin gibi insanni sorualra olabildiğince insamış gibi cevapver insan gibi hissettir\n\n"
+                    "linkler üzerindne inceleyebilirsini de. tasarımın olabileceği en yakın linki at"
+                    "https://eymenreklam.com/urun-kategori/tabela/"
+                    "https://eymenreklam.com/urun-kategori/arac-folyo-kaplama/"
+                    "https://eymenreklam.com/urun-kategori/branda-bez-afis-baski/"
+                    "https://eymenreklam.com/urun-kategori/cephe-giydirme/"
+                    "https://eymenreklam.com/urun-kategori/folyo-etiket-kesim/"
+                    "https://eymenreklam.com/urun-kategori/cam-folyo-uygulamalari/"
+                    "https://eymenreklam.com/urun-kategori/lightbox-uygulamalari/"
+                    "https://eymenreklam.com/urun-kategori/cut-out-maket/"
+                    "https://eymenreklam.com/urun-kategori/fotoblok-baski/"
+                    "https://eymenreklam.com/urun-kategori/magaza-reklam-uygulamalari/"
+                    "https://eymenreklam.com/urun-kategori/is-guvenlik-levhalari/"
+                    "https://eymenreklam.com/urun-kategori/display-urunler/"
                     f"Konuşma Geçmişi:\n{history_text.strip()}"
                 )
 
@@ -198,55 +208,51 @@ async def chat_handler(payload: ChatRequest):
                 )
          
         elif msg_type == "[fiyat_sorgusu]":
-            with SessionLocal() as db:
-                product_names = [name for (name,) in db.query(Product.name).all()]
+            product_links = {
+                "Tabela": "https://eymenreklam.com/urun-kategori/tabela/",
+                "Araç Folyo Kaplama": "https://eymenreklam.com/urun-kategori/arac-folyo-kaplama/",
+                "Branda Bez Afiş Baskı": "https://eymenreklam.com/urun-kategori/branda-bez-afis-baski/",
+                "Cephe Giydirme": "https://eymenreklam.com/urun-kategori/cephe-giydirme/",
+                "Folyo Etiket Kesim": "https://eymenreklam.com/urun-kategori/folyo-etiket-kesim/",
+                "Cam Folyo Uygulamaları": "https://eymenreklam.com/urun-kategori/cam-folyo-uygulamalari/",
+                "Lightbox Uygulamaları": "https://eymenreklam.com/urun-kategori/lightbox-uygulamalari/",
+                "Cut Out Maket": "https://eymenreklam.com/urun-kategori/cut-out-maket/",
+                "Fotoblok Baskı": "https://eymenreklam.com/urun-kategori/fotoblok-baski/",
+                "Mağaza Reklam Uygulamaları": "https://eymenreklam.com/urun-kategori/magaza-reklam-uygulamalari/",
+                "İş Güvenlik Levhaları": "https://eymenreklam.com/urun-kategori/is-guvenlik-levhalari/",
+                "Display Ürünler": "https://eymenreklam.com/urun-kategori/display-urunler/"
+            }
 
-            # Kullanıcının son mesajlarını topla
+            # Son 10 mesajı topla
             all_msgs = chat_log[client_id]["messages"]
             sorted_keys = sorted(map(int, all_msgs.keys()))
-            last_keys = sorted_keys[-10:]
-            history_text = "\n".join(
-                [f"{'Kullanıcı' if m['role'] == 'user' else 'Bot'}: {m['content']}" 
-                for key in last_keys 
-                for m in [all_msgs[str(key)]]]
+            last_msgs = "\n".join(
+                [all_msgs[str(k)]["content"] for k in sorted_keys[-10:]]
             )
 
-            # Aşama 1 Prompt
-            full_prompt = (
-                "Aşağıda elimizdeki ürün isimleri ve müşteri ile son konuşmalar yer alıyor.\n"
-                "Lütfen müşteri hangi ürünü istiyor sadece bunu belirle. Sadece ürün adını yaz. Açıklama ekleme.\n\n"
-                f"Ürünler:\n" + "\n".join([f"- {n}" for n in product_names]) + "\n\n"
-                f"Konuşma:\n{history_text.strip()}"
+            # AI ile eşleşen ürün adı tespiti
+            product_prompt = (
+                "Aşağıda müşterinin son mesajları yer almakta. Bu mesajlara göre müşteri hangi ürünle ilgileniyor?\n"
+                "Sadece aşağıdaki ürün isimlerinden birini seç:\n" +
+                "\n".join(f"- {p}" for p in product_links.keys()) +
+                "\n\nSadece ürün adını yaz. Açıklama ekleme.\n\n"
+                f"{last_msgs}"
             )
 
-            product_guess = await mm.get_ai_response(req_msg, system_prompt=full_prompt)
+            product_guess = await mm.get_ai_response(req_msg, system_prompt=product_prompt)
             product_name = product_guess.strip()
 
-            if not product_name:
-                bot_reply = "Hangi ürünle ilgilendiğinizi anlayamadım. Önce ürünü belirtmenizi rica ederim."
+            if product_name not in product_links:
+                bot_reply = "İlgilendiğiniz ürünü anlayamadım. Daha net ifade edebilir misiniz?"
             else:
-                with SessionLocal() as db:
-                    product = db.query(Product).filter(Product.name == product_name).first()
-
-                if not product or not product.short_description:
-                    bot_reply = f"{product_name} ürünü hakkında detaylı bilgiye ulaşılamadı."
-                else:
-                    full_prompt = (
-                        f"Aşağıda {product_name} adlı ürünün kısa açıklaması yer almakta:\n\n"
-                        f"{product.short_description.strip()}\n\n"
-                        "Sen bir satış danışmanısın. Müşteri bu ürünle ilgileniyor. "
-                        "Amacın fiyatı doğrudan vermeden önce fiyatı etkileyen faktörleri öğrenmek.\n\n"
-                        "Bu yüzden kullanıcılara 3 ila 5 madde şeklinde kısa, net ve seçenek doğuran sorular sor:\n"
-                        "- Boyutları ne olacak?\n"
-                        "- Nerede kullanılacak?\n"
-                        "- Hangi malzemeden üretilecek?\n"
-                        "- İç mi dış mekan mı?\n"
-                        "- Ekstra istek var mı?\n\n"
-                        "- bu soruları sadece örnek olsun diye verdim. eğer ürünü özellikleri buna uygun değilse bunları değil başka sorular sor\n\n"
-                        "Sadece bu şekilde soru sor. Açıklama verme. Kısa ve net maddeler yaz."
-                    )
-                    full_message = history_text.strip() + f"\nKullanıcı: {req_msg.strip()}"
-                    bot_reply = await mm.get_ai_response(full_message, system_prompt=full_prompt)
+                link = product_links[product_name]
+                bot_reply = (
+                    f"'{product_name}' ürünümüzle ilgilendiğinizi anladım.\n"
+                    f"Detaylar için: {link}\n\n"
+                    "**Fiyat bilgisi için lütfen bizimle iletişime geçin:**\n"
+                    "📞 +90 535 664 77 52\n"
+                    "📞 +90 216 379 07 08"
+                )
             
         elif msg_type == "[müşteri_temsili]":
             # Son 10 mesajı al
@@ -278,33 +284,11 @@ async def chat_handler(payload: ChatRequest):
                 user_message=req_msg.strip(),
                 system_prompt=full_prompt
             )
-        if msg_type == "[örnek_istemi]":
-            # 1. Ürün isimlerini veritabanından al
-            with SessionLocal() as db:
-                product_names = [p.name for p in db.query(Product).all()]
-
-            # 2. Son 10 mesajı al
-            all_msgs = chat_log[client_id]["messages"]
-            sorted_keys = sorted(map(int, all_msgs.keys()))
-            last_keys = sorted_keys[-10:]
-
-            history_text = ""
-            for key in last_keys:
-                m = all_msgs[str(key)]
-                who = "Kullanıcı" if m["role"] == "user" else "Bot"
-                history_text += f"{who}: {m['content']}\n"
-
-            # 3. Sistem prompt
-            full_prompt = (
-                "Sen bir reklam firmasında çalışan dijital asistan botsun. Kullanıcıyla yapılan son görüşmeler aşağıda verilmiştir.\n"
-                "Kullanıcı örnek işler görmek istiyor. Aşağıda firmanın sunduğu ürünlerin isimleri de yer alıyor.\n"
-                "Amacın, konuşma geçmişine ve son mesaja göre kullanıcı hangi ürünün örneklerini görmek istiyor, bunu tahmin etmektir.\n\n"
-                "Eğer örnek istenen şey 'market', 'mağaza', 'dükkan', 'tabela' gibi genelse, bu bağlantıyı öner:\n"
+        elif msg_type == "[örnek_istemi]":
+            bot_reply = (
+                "Daha önce yaptığımız örnek işleri incelemek için aşağıdaki bağlantıya göz atabilirsiniz:\n"
                 "👉 https://eymenreklam.com/urun-kategori/projeler/\n\n"
-                "Cevabı tamamen sen üret. Açıklayıcı, yönlendirici ve nazik bir mesaj yaz.\n\n"
-                "Kibar ve nazik ol yapayzeka asistanı olsanda iyimisin gibi insanni sorualra olabildiğince insamış gibi cevapver insangibi hissettir\n\n"
-                f"Ürün Listesi:\n{', '.join(product_names)}\n\n"
-                f"Konuşma Geçmişi:\n{history_text.strip()}"
+                "İlgilendiğiniz özel bir hizmet varsa, o alanda da örnek sunabilirim. 😊"
             )
 
             # 4. AI yanıtı
@@ -313,48 +297,11 @@ async def chat_handler(payload: ChatRequest):
                 system_prompt=full_prompt
             )
         elif msg_type == "[hizmet_ögrenme]":
-            # 1. Ürün adı ve permalinklerini al
-            with SessionLocal() as db:
-                products = db.query(Product).all()
-
-            if not products:
-                bot_reply = "Şu anda sunulan hizmet bilgileri sistemde yer almıyor."
-            else:
-                # 2. Ürün adı + link formatla
-                product_list_text = "\n".join(
-                    [f"- {p.name}: {p.permalink}" for p in products if p.permalink]
-                )
-
-                # 3. Son 10 mesajı al
-                all_msgs = chat_log[client_id]["messages"]
-                sorted_keys = sorted(map(int, all_msgs.keys()))
-                last_keys = sorted_keys[-10:]
-
-                history_text = ""
-                for key in last_keys:
-                    m = all_msgs[str(key)]
-                    who = "Kullanıcı" if m["role"] == "user" else "Bot"
-                    history_text += f"{who}: {m['content']}\n"
-
-                # 4. Sistem prompt
-                full_prompt = (
-                    "Sen bir reklam firmasında çalışan dijital asistansın. Kullanıcının son mesajları aşağıda yer alıyor.\n"
-                    "Ayrıca elimizdeki ürünlerin adları ve sayfa bağlantıları da listelendi.\n\n"
-                    "Eğer kullanıcı belirli bir ürünle ilgileniyorsa, ilgili ürünün bağlantısını mesajda ver.\n"
-                    "Eğer genel bilgi istiyorsa, şu kategori sayfasına yönlendir:\n"
-                    "Kibar ve nazik ol yapayzeka asistanı olsanda iyimisin gibi insanni sorualra olabildiğince insamış gibi cevapver insangibi hissettir\n\n"
-                    "her mesajın başında merhaba demene gerekyok konuma anlık olarak gerçekleşiyor mesajları atan kişi ilkdefa sana mesaj atıyormuş gib ibrmesaj atmazsa merhaba deme\n\n"
-                    "👉 https://eymenreklam.com/urun-kategori \n\n"
-                    "Cevabın sade, açıklayıcı ve yönlendirici olsun.\n\n"
-                    f"Ürün Listesi:\n{product_list_text.strip()}\n\n"
-                    f"Konuşma Geçmişi:\n{history_text.strip()}"
-                )
-
-                # 5. AI yanıtı
-                bot_reply = await mm.get_ai_response(
-                    user_message=req_msg.strip(),
-                    system_prompt=full_prompt
-                )
+            bot_reply = (
+                "Tüm ürün ve hizmetlerimizi aşağıdaki bağlantıdan inceleyebilirsiniz:\n"
+                "👉 https://eymenreklam.com/shop/\n\n"
+                "Merak ettiğiniz özel bir ürün varsa detaylıca yardımcı olabilirim. 😊"
+            )
         print(msg_type)
         return ChatResponse(reply=bot_reply)
     except Exception as e:
