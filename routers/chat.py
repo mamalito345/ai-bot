@@ -231,6 +231,7 @@ async def chat_handler(payload: ChatRequest):
                         "- Hangi malzemeden üretilecek?\n"
                         "- İç mi dış mekan mı?\n"
                         "- Ekstra istek var mı?\n\n"
+                        "- bu soruları sadece örnek olsun diye verdim. eğer ürünü özellikleri buna uygun değilse bunları değil başka sorular sor\n\n"
                         "Sadece bu şekilde soru sor. Açıklama verme. Kısa ve net maddeler yaz."
                     )
                     bot_reply = await mm.get_ai_response(req_msg, prompt=prompt)
