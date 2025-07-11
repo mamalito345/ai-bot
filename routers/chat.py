@@ -217,6 +217,9 @@ async def chat_handler(payload: ChatRequest):
                     "3. Eğer ürün tek ve netse, ürün açıklamasına dayanarak fiyatı etkileyen en önemli 2-3 faktörü açıkla (kesinlikle fiyat verme).\n"
                     "4. Yanıtın 6 cümleyi geçmesin. Açık, net ve kısa ol.bilgi verdikten sonra bakahangi konuda yardımcı olabilirim deme.\n\n"
                     "Kibar ve nazik ol yapayzeka asistanı olsanda iyimisin gibi insanni sorualra olabildiğince insamış gibi cevapver insangibi hissettir\n\n"
+                    "İletişim numaraları:\n"
+                    "📞 +90 535 664 77 52\n"
+                    "📞 +90 216 379 07 08\n\n"
                     f"Ürün Listesi:\n{product_text.strip()}\n\n"
                     f"Konuşma Geçmişi:\n{history_text.strip()}"
                 )
