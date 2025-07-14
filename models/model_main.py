@@ -6,7 +6,7 @@ from app.config import settings
 openai.api_key = settings.openai_api_key  # .env dosyandan çekiyorsan
 
 
-ready_propt = """
+ready_prompt = """
 Sen Eymen Reklam Ajansı'nın sitesinde çalışan bir yapay zeka asistansın. Görevin, gelen müşterilere ürün bulmada yardımcı olmak.
 
 Kurallar:
