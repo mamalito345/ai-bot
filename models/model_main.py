@@ -1,8 +1,8 @@
 import asyncio
-import openai
+from openai import AsyncOpenAI
 from app.config import settings
 
-client = openai.OpenAI(api_key=settings.openai_api_key)
+client = AsyncOpenAI(api_key=settings.openai_api_key)
 
 
 ready_prompt = """
@@ -98,7 +98,7 @@ Cut-Out Foreks: Figür şeklinde reklam panosu.
 async def get_ai_response(user_message: str) -> str:
     try:
         response = await client.chat.completions.create(
-            model="gpt-4o",  # o4-mini-high eşleniği
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": ready_prompt},
                 {"role": "user", "content": user_message}
@@ -106,7 +106,6 @@ async def get_ai_response(user_message: str) -> str:
             temperature=0.7
         )
         return response.choices[0].message.content.strip()
-
     except Exception as e:
         return f"Hata oluştu: {str(e)}"
 
