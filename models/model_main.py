@@ -1,9 +1,8 @@
-import openai
 import asyncio
+import openai
 from app.config import settings
 
-# OpenAI API anahtarın
-openai.api_key = settings.openai_api_key  # .env dosyandan çekiyorsan
+client = openai.OpenAI(api_key=settings.openai_api_key)
 
 
 ready_prompt = """
@@ -96,12 +95,9 @@ Cut-Out Foreks: Figür şeklinde reklam panosu.
 🔗 https://eymenreklam.com/urun/is-guvenligi-levhalari/
 """
 
-# Anahtarları döngüsel kullanmak için index tutucu
-current_key_index = 0  # Bu global olacak
-
 async def get_ai_response(user_message: str) -> str:
     try:
-        response = await openai.ChatCompletion.acreate(
+        response = await client.chat.completions.create(
             model="gpt-4o",  # o4-mini-high eşleniği
             messages=[
                 {"role": "system", "content": ready_prompt},
@@ -114,6 +110,5 @@ async def get_ai_response(user_message: str) -> str:
 
     except Exception as e:
         return f"Hata oluştu: {str(e)}"
-
 
 
