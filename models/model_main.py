@@ -1,20 +1,10 @@
-import httpx
+import openai
 import asyncio
 from app.config import settings
 
-import httpx
-import asyncio
-from app.config import settings
+# OpenAI API anahtarın
+openai.api_key = settings.openai_api_key  # .env dosyandan çekiyorsan
 
-# Tüm anahtarları listeye al
-GEMINI_KEYS = [
-    settings.gemini_api_key_1,
-    settings.gemini_api_key_2,
-    settings.gemini_api_key_3,
-    settings.gemini_api_key_4,
-    settings.gemini_api_key_5,
-    settings.gemini_api_key_6,
-]
 
 ready_propt = """
 Sen Eymen Reklam Ajansı'nın sitesinde çalışan bir yapay zeka asistansın. Görevin, gelen müşterilere ürün bulmada yardımcı olmak.
@@ -110,37 +100,17 @@ Cut-Out Foreks: Figür şeklinde reklam panosu.
 current_key_index = 0  # Bu global olacak
 
 async def get_ai_response(user_message: str) -> str:
-    global current_key_index
-
-    # Döngüsel olarak anahtar seç
-    api_key = GEMINI_KEYS[current_key_index]
-    current_key_index = (current_key_index + 1) % len(GEMINI_KEYS)
-
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={api_key}"
-
-    headers = {
-        "Content-Type": "application/json"
-    }
-
-    payload = {
-        "contents": [
-            {
-                "role": "user",
-                "parts": [
-                    {"text": f"{ready_propt}\n\n{user_message}"}
-                ]
-            }
-        ]
-    }
-
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(url, headers=headers, json=payload)
-            response.raise_for_status()
-            data = response.json()
+        response = await openai.ChatCompletion.acreate(
+            model="gpt-4o",  # o4-mini-high eşleniği
+            messages=[
+                {"role": "system", "content": ready_prompt},
+                {"role": "user", "content": user_message}
+            ],
+            temperature=0.7
+        )
 
-        text = data["candidates"][0]["content"]["parts"][0]["text"]
-        return text.strip()
+        return response.choices[0].message.content.strip()
 
     except Exception as e:
         return f"Hata oluştu: {str(e)}"
