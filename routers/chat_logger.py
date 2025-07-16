@@ -22,12 +22,12 @@ async def send_chat(request: Request):
 
     msg = MIMEText(content, "plain", "utf-8")
     msg["Subject"] = f"Chat Log - {client_id}"
-    msg["From"] = "gonderen@example.com"
-    msg["To"] = "alici@example.com"
+    msg["From"] = "botc2262@gmail.com"
+    msg["To"] = "ramazan@eymenajans.com.tr"
 
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-            smtp.login("gonderen@example.com", "uygulama-sifresi")
+            smtp.login("botc2262@gmail.com", "wejhzzijowvtyomb")
             smtp.send_message(msg)
         return {"status": "sent"}
     except Exception as e:
