@@ -3,6 +3,8 @@ import json
 from email.mime.text import MIMEText
 import smtplib
 
+router = APIRouter()
+
 @router.post("/send-chat")
 async def send_chat(request: Request):
     try:
