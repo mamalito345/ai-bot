@@ -22,7 +22,6 @@ async def shutdown():
 
 # ana router
 app.include_router(chat_router)
-app.include_router(auth_routes.router)
 @app.get("/")
 def root():
     return {"message": "API is running"}
