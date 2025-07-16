@@ -1,29 +1,34 @@
 from fastapi import APIRouter, Request
-from pydantic import BaseModel
 import smtplib
 from email.mime.text import MIMEText
 
 router = APIRouter()
 
-class ChatData(BaseModel):
-    client_id: str
-    messages: list[str]
-
 @router.post("/send-chat")
-async def send_chat_log(data: ChatData):
-    message_body = "\n\n".join(data.messages)
-    
-    msg = MIMEText(f"Kullanıcı ID: {data.client_id}\n\nSohbet:\n{message_body}", "plain", "utf-8")
-    msg["Subject"] = "Kapanışta Chat Logu"
-    msg["From"] = "botc2262@gmail.com"
-    msg["To"] = "ramazan@eymenajans.com.tr"
+async def send_chat(request: Request):
+    data = await request.json()
+    client_id = data.get("client_id")
+    messages = data.get("messages", [])
+
+    if not messages:
+        return {"status": "no messages"}
+
+    # E-posta içeriği
+    content = f"📩 Yeni mesajlar (client_id: {client_id}):\n\n"
+    for m in messages:
+        role = m["sender"]
+        text = m["text"]
+        content += f"[{role.upper()}] {text}\n"
+
+    msg = MIMEText(content, "plain", "utf-8")
+    msg["Subject"] = f"Chat Log - {client_id}"
+    msg["From"] = "gonderen@example.com"
+    msg["To"] = "alici@example.com"
 
     try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
-        server.login("botc2262@gmail.com", "wejhzzijowvtyomb")
-        server.send_message(msg)
-        server.quit()
-        return {"status": "success"}
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+            smtp.login("gonderen@example.com", "uygulama-sifresi")
+            smtp.send_message(msg)
+        return {"status": "sent"}
     except Exception as e:
         return {"status": "error", "detail": str(e)}
