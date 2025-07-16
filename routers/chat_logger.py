@@ -1,19 +1,22 @@
-from fastapi import APIRouter, Request
-import smtplib
+from fastapi import Request
+import json
 from email.mime.text import MIMEText
-
-router = APIRouter()
+import smtplib
 
 @router.post("/send-chat")
 async def send_chat(request: Request):
-    data = await request.json()
+    try:
+        raw_body = await request.body()
+        data = json.loads(raw_body.decode("utf-8"))  # ✅ sendBeacon için doğru çözüm
+    except Exception as e:
+        return {"status": "parse_error", "detail": str(e)}
+    
     client_id = data.get("client_id")
     messages = data.get("messages", [])
 
     if not messages:
         return {"status": "no messages"}
 
-    # E-posta içeriği
     content = f"📩 Yeni mesajlar (client_id: {client_id}):\n\n"
     for m in messages:
         role = m["sender"]
@@ -31,4 +34,4 @@ async def send_chat(request: Request):
             smtp.send_message(msg)
         return {"status": "sent"}
     except Exception as e:
-        return {"status": "error", "detail": str(e)}
+        return {"status": "email_error", "detail": str(e)}
