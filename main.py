@@ -3,7 +3,7 @@ from routers.chat import router as chat_router
 from fastapi.middleware.cors import CORSMiddleware
 from routers import form_routes
 from routers import chat_logger
-
+from routers import admin
 app = FastAPI()
 
 # CORS (geliştirme için herkes)
@@ -18,6 +18,7 @@ app.add_middleware(
 app.include_router(chat_router)
 app.include_router(form_routes.router)
 app.include_router(chat_logger.router)
+app.include_router(admin.router)
 @app.get("/")
 def root():
     return {"message": "API is running"}

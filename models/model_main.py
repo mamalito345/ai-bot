@@ -1,6 +1,9 @@
 import asyncio
 from openai import AsyncOpenAI
 from app.config import settings
+from pathlib import Path
+prompt_path = Path(__file__).parent / "prompt.txt"
+
 
 client = AsyncOpenAI(api_key=settings.openai_api_key)
 
@@ -121,6 +124,11 @@ Cut-Out Foreks: Figür şeklinde reklam panosu.
 """
 
 async def get_ai_response(user_message: str) -> str:
+    if prompt_path.exists():
+        system_prompt = prompt_path.read_text(encoding="utf-8")
+    else:
+        system_prompt = "Eymen Reklam Asistanı sistem promptu eksik."
+    
     try:
         response = await client.chat.completions.create(
             model="gpt-4o",
