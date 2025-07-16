@@ -1,5 +1,0 @@
-app
-database
-models
-routers
-service

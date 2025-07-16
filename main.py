@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-from database.db import database, engine, Base
 from routers.chat import router as chat_router
 from fastapi.middleware.cors import CORSMiddleware
 from routers import auth_routes as auth_routes
