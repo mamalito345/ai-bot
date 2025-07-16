@@ -29,7 +29,7 @@ async def handle_form(form: ContactForm):
         msg = MIMEText(body)
         msg["Subject"] = "Yeni Form Başvurusu"
         msg["From"] = "botc2262@gmail.com"
-        msg["To"] = "ramazan@eymenajans.com.tr"
+        msg["To"] = "info@eymenreklam.com"
 
         # Mail gönderimi (SMTP ayarlarını değiştir)
         with smtplib.SMTP("smtp.gmail.com", 587) as server:

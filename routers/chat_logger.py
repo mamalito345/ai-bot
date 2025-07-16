@@ -38,7 +38,7 @@ async def send_chat(request: Request):
     msg = MIMEText(content, "plain", "utf-8")
     msg["Subject"] = f"Chat Log - {client_id}"
     msg["From"] = "botc2262@gmail.com"
-    msg["To"] = "ramazan@eymenajans.com.tr"
+    msg["To"] = "info@eymenreklam.com"
 
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
