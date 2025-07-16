@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from routers.chat import router as chat_router
 from fastapi.middleware.cors import CORSMiddleware
-from routers import chat_logger
 from routers import form_routes
+from routers import chat_logger
+
 app = FastAPI()
 
 # CORS (geliştirme için herkes)
