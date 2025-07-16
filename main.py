@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from routers.chat import router as chat_router
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth_routes as auth_routes
 # tablolar (gerekirse) oluştur
 Base.metadata.create_all(bind=engine)
 
