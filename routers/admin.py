@@ -5,8 +5,8 @@ router = APIRouter()
 
 WC_API_URL = "https://eymenreklam.com/wp-json/wc/v3/products"
 WC_CATEGORIES_URL = "https://eymenreklam.com/wp-json/wc/v3/products/categories"
-WC_KEY = "YOUR_KEY"
-WC_SECRET = "YOUR_SECRET"
+WC_KEY = "ck_4b389e2352adc9a781892a493c71e7b98b536aa4"
+WC_SECRET = "cs_cbbd48668086de811ed9417ee6b62a85444efee6"
 
 def fetch_woocommerce_data():
     auth = (WC_KEY, WC_SECRET)
