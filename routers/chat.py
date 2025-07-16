@@ -1,8 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from models import model_main as mm
-from database.db import SessionLocal
-from models.db_models import Product
 import numpy as np
 from numpy.linalg import norm
 from openai import AsyncOpenAI
