@@ -1,8 +1,6 @@
 from fastapi import FastAPI
 from routers.chat import router as chat_router
 from fastapi.middleware.cors import CORSMiddleware
-# tablolar (gerekirse) oluştur
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
