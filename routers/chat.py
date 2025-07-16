@@ -73,7 +73,7 @@ async def chat_handler(payload: ChatRequest):
             history_text += f"{who}: {m['content']}\n"
 
         # Tüm geçmiş + son kullanıcı mesajı
-        full_prompt = history_text.strip() + f"\nKullanıcı: {req_msg}"
+        full_prompt = history_text.strip() + f"\nMesaj Geçmişi: {req_msg}"
 
         # AI çağrısı (sadece cevap al)
         bot_reply = await mm.get_ai_response(user_message=full_prompt)
