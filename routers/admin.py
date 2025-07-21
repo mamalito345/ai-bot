@@ -72,7 +72,7 @@ whatsap iletişim linki sorulursa https://api.whatsapp.com/send/?phone=905455491
 async def update_prompt():
     products, categories = fetch_woocommerce_data()
     prompt = generate_prompt(products, categories)
-
+    print(prompt)
     with open("prompt.txt", "w", encoding="utf-8") as f:
         f.write(prompt)
 
