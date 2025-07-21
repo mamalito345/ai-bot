@@ -11,14 +11,25 @@ WC_SECRET = "cs_cbbd48668086de811ed9417ee6b62a85444efee6"
 def fetch_woocommerce_data():
     auth = (WC_KEY, WC_SECRET)
 
-    # Ürünleri çek
-    products_res = requests.get(WC_API_URL, auth=auth)
-    categories_res = requests.get(WC_CATEGORIES_URL, auth=auth)
+    # Daha fazla veri çekmek için sayfalamalı istek gönder
+    def fetch_all(url):
+        all_data = []
+        page = 1
+        while True:
+            res = requests.get(url, auth=auth, params={"per_page": 100, "page": page})
+            res.raise_for_status()
+            data = res.json()
+            if not data:
+                break
+            all_data.extend(data)
+            page += 1
+        return all_data
 
-    products = products_res.json()
-    categories = categories_res.json()
+    products = fetch_all(WC_API_URL)
+    categories = fetch_all(WC_CATEGORIES_URL)
 
     return products, categories
+
 
 def generate_prompt(products, categories):
     base_prompt = """Sen Eymen Reklam Ajansı'nın sitesinde çalışan bir yapay zeka asistansın. Görevin, gelen müşterilere ürün bulmada yardımcı olmak.
