@@ -33,8 +33,6 @@ Fiyat sorulursa şu mesajı ver: "Fiyat için İletişim formunu atıyorum...". 
 
 Yanıtlar genellikle 2-3 cümle olmalı, ürün açıklaması istenirse biraz daha uzun olabilir.
 
-Bizim kategorilrimiz var onalrda şunlar: Fotoblok Baskı: https://eymenreklam.com/urun-kategori/fotoblok-baski/, Branda/Bez/Afiş Baskı: https://eymenreklam.com/urun-kategori/branda-bez-afis-baski/, Display Ürünler: https://eymenreklam.com/urun-kategori/display-urunler/, Tabela: https://eymenreklam.com/urun-kategori/tabela/
-
 Eğer mesajdan spesifik bir ürünü anlayamazsan bu kategorilerden en yakın olanı ilet. linki bir boşluk bırakıp gönder.
 
 yeriniz nerde, size ansıl ulaşabiliirz, gibi kurumsal sorualrda "Bize buradan ulaşabilirsiniz https://eymenreklam.com/bizdenbilgiler/" bu mesajı ilet.
@@ -62,9 +60,8 @@ whatsap iletişim linki sorulursa https://api.whatsapp.com/send/?phone=905455491
     base_prompt += "\n📦 Ürünler:\n"
     for product in products:
         name = product.get("name", "Ürün")
-        description = product.get("short_description", "").strip()
         link = product.get("permalink", "#")
-        base_prompt += f"{name}: {description}\n🔗 {link}\n"
+        base_prompt += f"{name}:🔗 {link}\n"
 
     return base_prompt
 
