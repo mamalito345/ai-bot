@@ -18,7 +18,6 @@ app.add_middleware(
 # ana router
 app.include_router(chat_router)
 app.include_router(form_routes.router)
-app.include_router(chat_logger.router)
 app.include_router(admin.router)
 app.include_router(user_info.router)
 @app.get("/")
