@@ -37,6 +37,8 @@ async def chat_handler(payload: ChatRequest):
         req_msg   = payload.message.strip()
         client_id = payload.client_id.strip()
 
+        with open("prompt.txt", "r", encoding="utf-8") as o:
+            metin = o.read()
         # --- Log dosyasını oku
         with open(LOG_FILE, "r", encoding="utf-8") as f:
             chat_log = json.load(f)
@@ -76,7 +78,7 @@ async def chat_handler(payload: ChatRequest):
         full_prompt = history_text.strip() + f"\nMesaj Geçmişi: {req_msg}"
 
         # AI çağrısı (sadece cevap al)
-        bot_reply = await mm.get_ai_response(user_message=full_prompt)
+        bot_reply = await mm.get_ai_response(user_message=full_prompt, ready_prompt=metin)
 
         # --- Bot yanıtını ekle
         next_idx = str(max(map(int, messages.keys()), default=-1) + 1)
