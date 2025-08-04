@@ -68,18 +68,40 @@ async def verify_webhook(request: Request):
 
 @router.post("/webhook")
 async def handle_webhook(request: Request):
-    data = await request.json()
+    try:
+        data = await request.json()
+        
+        # Debug için yazdır
+        print("=== WEBHOOK POST ALINDI ===")
+        print(json.dumps(data, indent=2))
+        print("==========================")
+        
+        if 'entry' in data:
+            for entry in data['entry']:
+                if 'changes' in entry:
+                    for change in entry['changes']:
+                        print(f"Change field: {change.get('field')}")
+                        if 'messages' in change['value']:
+                            print("Mesajlar bulundu!")
+                            for message in change['value']['messages']:
+                                if message['type'] == 'text':
+                                    sender_phone = message['from']
+                                    message_text = message['text']['body']
+                                    
+                                    print(f"Mesaj: {message_text}")
+                                    print(f"Gönderen: {sender_phone}")
+                                    
+                                    asyncio.create_task(process_message(sender_phone, message_text))
+                                else:
+                                    print(f"Mesaj tipi: {message['type']}")
+                        else:
+                            print("Mesaj bulunamadı, change.value içeriği:")
+                            print(json.dumps(change['value'], indent=2))
+        else:
+            print("Entry bulunamadı")
+        
+        return {"status": "success"}
     
-    if 'entry' in data:
-        for entry in data['entry']:
-            if 'changes' in entry:
-                for change in entry['changes']:
-                    if 'messages' in change['value']:
-                        for message in change['value']['messages']:
-                            if message['type'] == 'text':
-                                sender_phone = message['from']
-                                message_text = message['text']['body']
-                                
-                                asyncio.create_task(process_message(sender_phone, message_text))
-    
-    return {"status": "success"}
+    except Exception as e:
+        print(f"Webhook hatası: {e}")
+        return {"status": "error", "message": str(e)}
