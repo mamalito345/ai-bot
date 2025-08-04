@@ -5,7 +5,7 @@ from routers import form_routes
 from routers import chat_logger
 from routers import admin
 from routers import user_info
-from whatsapp_router import router
+from routers import whatsapp_router
 app = FastAPI()
 
 # CORS (geliştirme için herkes)
@@ -21,7 +21,7 @@ app.include_router(chat_router)
 app.include_router(form_routes.router)
 app.include_router(admin.router)
 app.include_router(user_info.router)
-app.include_router(router)
+app.include_router(whatsapp_router.router)
 @app.get("/")
 def root():
     return {"message": "API is running"}
