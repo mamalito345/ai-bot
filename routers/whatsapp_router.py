@@ -62,9 +62,21 @@ async def verify_webhook(request: Request):
     token = request.query_params.get('hub.verify_token')
     challenge = request.query_params.get('hub.challenge')
     
+    # Debug için yazdır
+    print(f"=== WEBHOOK VERIFY ===")
+    print(f"Mode: {mode}")
+    print(f"Gelen Token: {token}")
+    print(f"Beklenen Token: {VERIFY_TOKEN}")
+    print(f"Challenge: {challenge}")
+    print(f"Token eşleşiyor mu: {token == VERIFY_TOKEN}")
+    print(f"====================")
+    
     if mode == 'subscribe' and token == VERIFY_TOKEN:
+        print("Token doğru, challenge döndürülüyor")
         return challenge
-    return {"error": "Forbidden"}
+    
+    print("Token yanlış veya mode yanlış!")
+    return {"error": "Forbidden", "received": token, "expected": VERIFY_TOKEN}
 
 @router.post("/webhook")
 async def handle_webhook(request: Request):
